@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<script>(function(){function fmt(a){if(a instanceof Error)return a.message;if(typeof a==="object"&&a!==null){try{return JSON.stringify(a)}catch(e){return String(a)}}return String(a)}function send(t,m,l){try{parent.postMessage({__stc:1,type:t,msg:m,line:l},"*")}catch(e){}}["log","info","warn","error"].forEach(function(m){var o=console[m];console[m]=function(){send(m,Array.prototype.map.call(arguments,fmt).join(" "));if(o)o.apply(console,arguments)}});window.addEventListener("error",function(e){send("error",e.message,e.lineno)});window.addEventListener("unhandledrejection",function(e){send("error","Promise: "+fmt(e.reason))});})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Игры</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root {
+    --bg: #E8E4DC;
+    --card: #F2EFE9;
+    --text: #1C1C1C;
+    --hint: #6E6A63;
+    --accent: #B8942E;
+    --line: #D6D1C7;
+    --edge: 20px;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden; user-select: none; -webkit-user-select: none;
+  }
+  #app {
+    position: relative; z-index: 1;
+    display: flex; flex-direction: column;
+    height: 100vh; height: 100dvh;
+    padding: 26px 0 calc(14px + env(safe-area-inset-bottom));
+  }
+  #app::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(0,0,0,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,0.035) 1px, transparent 1px);
+    background-size: 24px 24px; z-index: -1;
+  }
+  header { padding: 0 var(--edge) 16px; margin-bottom: 18px; }
+  h1 { font-size: 32px; font-weight: 600; margin: 0 0 8px; letter-spacing: -0.02em; }
+  .title-rule { width: 32px; height: 4px; background: var(--accent); border-radius: 2px; margin: 0 0 14px; }
+  .subtitle { font-size: 15px; line-height: 1.45; color: var(--hint); margin: 0; }
+  .pager { position: relative; flex: 1; min-height: 0; display: flex; align-items: stretch; }
+  .pages {
+    flex: 1; display: flex; overflow-x: auto; overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    padding: 0 var(--edge);
+    scroll-padding-left: var(--edge);
+  }
+  .pages::-webkit-scrollbar { display: none; }
+  .page {
+    flex: 0 0 100%; scroll-snap-align: start;
+    display: flex; flex-direction: column;
+    justify-content: flex-start;
+    gap: 14px; padding: 4px 0; min-height: 0;
+  }
+  .page:not(:last-child) { margin-right: 20px; }
+  .card {
+    position: relative; display: flex; align-items: center;
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 16px 18px 16px 24px;
+    height: 118px; flex: 0 0 auto;
+    color: var(--text); overflow: hidden;
+  }
+  .card::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0;
+    width: 7px; background: var(--accent);
+    border-radius: 12px 0 0 12px;
+  }
+  .card.disabled::before { background: var(--line); }
+  .card .info { display: flex; flex-direction: column; justify-content: center; gap: 10px; min-width: 0; flex: 1; }
+  .card h2 { font-size: 19px; font-weight: 600; margin: 0; }
+  .card .desc { font-size: 14px; color: var(--hint); margin: 0; }
+  .card .badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--accent); color: #FFFFFF;
+    font-size: 13px; font-weight: 600;
+    padding: 8px 18px; border-radius: 8px;
+    margin-top: 2px; align-self: flex-start;
+    text-decoration: none;
+  }
+  .card .badge:active { opacity: 0.75; }
+  .card.disabled .badge { background: var(--line); color: var(--hint); pointer-events: none; }
+  .card .thumb {
+    width: 60px; height: 60px; flex-shrink: 0; margin-left: 16px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .icon-snake { position: relative; width: 100%; height: 100%; }
+  .icon-snake span { position: absolute; background: var(--accent); }
+  .icon-snake .s1 { width: 14px; height: 14px; left: 2px;  top: 4px;  border-radius: 4px; }
+  .icon-snake .s2 { width: 14px; height: 14px; left: 20px; top: 4px;  border-radius: 4px; }
+  .icon-snake .s3 { width: 14px; height: 14px; left: 38px; top: 4px;  border-radius: 4px; }
+  .icon-snake .s4 { width: 14px; height: 14px; left: 38px; top: 22px; border-radius: 4px; }
+  .icon-snake .s5 { width: 14px; height: 14px; left: 38px; top: 40px; border-radius: 4px; }
+  .icon-snake .head { width: 16px; height: 16px; left: 18px; top: 39px; border-radius: 5px; }
+  .icon-snake .head::after {
+    content: ""; position: absolute; top: 4px; right: 4px;
+    width: 4px; height: 4px; background: var(--card); border-radius: 50%;
+  }
+  .icon-2048 { display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); gap: 4px; width: 100%; height: 100%; }
+  .icon-2048 span { display: flex; align-items: center; justify-content: center; background: var(--accent); color: #FFFFFF; font-size: 13px; font-weight: 700; border-radius: 4px; line-height: 1; }
+  .icon-2048 span:nth-child(2) { opacity: 0.85; }
+  .icon-2048 span:nth-child(3) { opacity: 0.7; }
+  .icon-2048 span:nth-child(4) { opacity: 0.55; }
+
+  .icon-mines { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); gap: 4px; width: 100%; height: 100%; }
+  .icon-mines span { background: var(--accent); border-radius: 3px; position: relative; }
+  .icon-mines span:nth-child(1) { opacity: 0.55; }
+  .icon-mines span:nth-child(2) { opacity: 0.8; }
+  .icon-mines span:nth-child(3) { opacity: 0.65; }
+  .icon-mines span:nth-child(4) { opacity: 0.9; }
+  .icon-mines span:nth-child(5) { opacity: 1; }
+  .icon-mines span:nth-child(6) { opacity: 0.6; }
+  .icon-mines span:nth-child(7) { opacity: 0.75; }
+  .icon-mines span:nth-child(8) { opacity: 0.5; }
+  .icon-mines span:nth-child(9) { opacity: 0.85; }
+  .icon-mines span.dot::after {
+    content: ""; position: absolute; inset: 0; margin: auto;
+    width: 5px; height: 5px; background: #FFFFFF; border-radius: 50%; opacity: 0.9;
+  }
+  .icon-mines span.flag::before {
+    content: ""; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -40%);
+    width: 2px; height: 12px; background: #FFFFFF;
+  }
+  .icon-mines span.flag::after {
+    content: ""; position: absolute; left: 50%; top: 50%; transform: translate(0, -60%);
+    width: 0; height: 0;
+    border-left: 6px solid #FFFFFF;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+  }
+
+  .support-card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 18px;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .support-card h2 { font-size: 19px; font-weight: 600; margin: 0; }
+  .support-card p { font-size: 14px; color: var(--hint); margin: 0; line-height: 1.45; }
+  .support-card textarea {
+    width: 100%; min-height: 120px;
+    background: var(--bg); border: 1px solid var(--line);
+    border-radius: 10px; padding: 12px;
+    font-family: inherit; font-size: 14px; color: var(--text);
+    resize: vertical; outline: none;
+    -webkit-user-select: text; user-select: text;
+  }
+  .support-card textarea::placeholder { color: var(--hint); }
+  .support-card textarea:focus { border-color: var(--accent); }
+  .support-card button {
+    background: var(--accent); color: #FFFFFF;
+    border: none; border-radius: 8px;
+    padding: 10px 22px; font-size: 14px; font-weight: 600;
+    align-self: flex-start; font-family: inherit;
+  }
+  .support-card button:active { opacity: 0.75; }
+  .support-card button:disabled { opacity: 0.5; }
+  .support-status { font-size: 13px; color: var(--hint); margin: 0; min-height: 18px; }
+  .support-status.ok { color: var(--accent); }
+  .support-status.err { color: #e5484d; }
+
+  .dots { display: flex; justify-content: center; gap: 10px; padding: 16px 0 4px; }
+  .dots span { width: 8px; height: 8px; border-radius: 50%; background: var(--line); transition: background 0.15s ease; }
+  .dots span.active { background: var(--accent); }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>Игры</h1>
+    <div class="title-rule"></div>
+    <p class="subtitle">Простые игры на пару минут. Без регистрации, без лишнего.</p>
+  </header>
+
+  <div class="pager">
+    <div class="pages" id="pages">
+      <div class="page support">
+        <div class="support-card">
+          <h2>Нашли баг?</h2>
+          <p>Опишите, что сломалось или работает неправильно. Мы починим.</p>
+          <textarea id="bug-text" placeholder="Что случилось?"></textarea>
+          <button id="bug-send" type="button">Отправить</button>
+          <p class="support-status" id="bug-status"></p>
+        </div>
+      </div>
+
+      <div class="page games">
+        <div class="card">
+          <div class="info">
+            <h2>Змейка</h2>
+            <p class="desc">Классика на несколько минут</p>
+            <a class="badge" href="snake.html">Играть</a>
+          </div>
+          <div class="thumb"><div class="icon-snake"><span class="s1"></span><span class="s2"></span><span class="s3"></span><span class="s4"></span><span class="s5"></span><span class="head"></span></div></div>
+        </div>
+        <div class="card disabled">
+          <div class="info">
+            <h2>2048</h2>
+            <p class="desc">Складывайте числа</p>
+            <span class="badge">Скоро</span>
+          </div>
+          <div class="thumb"><div class="icon-2048"><span>2</span><span>0</span><span>4</span><span>8</span></div></div>
+        </div>
+        <div class="card disabled">
+          <div class="info">
+            <h2>Сапёр</h2>
+            <p class="desc">Минное поле</p>
+            <span class="badge">Скоро</span>
+          </div>
+          <div class="thumb"><div class="icon-mines"><span class="dot"></span><span></span><span class="dot"></span><span></span><span class="flag"></span><span class="dot"></span><span></span><span class="dot"></span><span></span></div></div>
+        </div>
+      </div>
+
+      <div class="page games">
+        <div class="card disabled"><div class="info"><h2>Тетрис</h2><p class="desc">Собирайте линии</p><span class="badge">Скоро</span></div><div class="thumb"></div></div>
+        <div class="card disabled"><div class="info"><h2>Пятнашки</h2><p class="desc">Расставьте числа по порядку</p><span class="badge">Скоро</span></div><div class="thumb"></div></div>
+        <div class="card disabled"><div class="info"><h2>Викторина</h2><p class="desc">Проверьте эрудицию</p><span class="badge">Скоро</span></div><div class="thumb"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dots" id="dots"></div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+  if (tg) { try { tg.ready(); } catch (e) {} try { tg.expand(); } catch (e) {} }
+
+  var PAGE_GAP = 20;
+  var pages = document.getElementById('pages');
+  var dotsWrap = document.getElementById('dots');
+  var totalPages = pages.querySelectorAll('.page').length;
+  var dots = [];
+  var currentPage = 1;
+  var started = false;
+  var userTouching = false;
+
+  for (var i = 0; i < totalPages; i++) {
+    var d = document.createElement('span');
+    if (i === currentPage) d.className = 'active';
+    dotsWrap.appendChild(d);
+    dots.push(d);
+  }
+
+  function step() { return (pages.clientWidth || 1) + PAGE_GAP; }
+  function scrollLeftFor(index) { return index * step(); }
+  function clamp(n) { return Math.max(0, Math.min(totalPages - 1, n)); }
+
+  function setActive(index) {
+    if (index === currentPage) return;
+    currentPage = index;
+    for (var i = 0; i < dots.length; i++) dots[i].classList.toggle('active', i === index);
+    if (tg && tg.HapticFeedback && typeof tg.isVersionAtLeast === 'function' && tg.isVersionAtLeast('6.1')) {
+      try { tg.HapticFeedback.impactOccurred('light'); } catch (e) {}
+    }
+  }
+
+  function updateFromScroll() {
+    if (!started || !pages.clientWidth) return;
+    var w = step();
+    var idx = clamp(Math.round(pages.scrollLeft / w));
+    if (Math.abs(pages.scrollLeft - idx * w) > w / 2 - 1) return;
+    setActive(idx);
+  }
+
+  pages.addEventListener('scroll', updateFromScroll, {passive: true});
+  if ('onscrollend' in window) {
+    pages.addEventListener('scrollend', updateFromScroll, {passive: true});
+  }
+
+  pages.addEventListener('touchstart', function () { userTouching = true; }, {passive: true});
+  pages.addEventListener('touchend', function () { userTouching = false; }, {passive: true});
+  pages.addEventListener('touchcancel', function () { userTouching = false; }, {passive: true});
+
+  function snapToCurrent() {
+    if (!pages.clientWidth) return;
+    pages.scrollTo({ left: scrollLeftFor(currentPage), behavior: 'auto' });
+  }
+
+  window.addEventListener('resize', function () {
+    if (userTouching) return;
+    snapToCurrent();
+  });
+
+  if (window.ResizeObserver) {
+    new ResizeObserver(function () {
+      if (started && !userTouching) snapToCurrent();
+    }).observe(pages);
+  }
+
+  requestAnimationFrame(function () {
+    snapToCurrent();
+    started = true;
+    setActive(1);
+  });
+
+  var FORMSPREE_URL = 'https://formspree.io/f/mgakwyqr';
+  var textEl = document.getElementById('bug-text');
+  var sendBtn = document.getElementById('bug-send');
+  var statusEl = document.getElementById('bug-status');
+
+  sendBtn.addEventListener('click', function () {
+    var text = textEl.value.trim();
+    if (!text) {
+      statusEl.textContent = 'Напишите, что случилось.';
+      statusEl.className = 'support-status err';
+      return;
+    }
+    sendBtn.disabled = true;
+    statusEl.textContent = 'Отправляем…';
+    statusEl.className = 'support-status';
+
+    fetch(FORMSPREE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ message: text, source: 'mini-app' })
+    })
+    .then(function (res) {
+      if (res.ok) {
+        textEl.value = '';
+        statusEl.textContent = 'Спасибо, сообщение отправлено.';
+        statusEl.className = 'support-status ok';
+      } else {
+        statusEl.textContent = 'Не удалось отправить. Попробуйте ещё раз.';
+        statusEl.className = 'support-status err';
+      }
+    })
+    .catch(function () {
+      statusEl.textContent = 'Ошибка сети. Попробуйте ещё раз.';
+      statusEl.className = 'support-status err';
+    })
+    .finally(function () { sendBtn.disabled = false; });
+  });
+})();
+</script>
+</body>
+</html>

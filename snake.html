@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -10,7 +8,7 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   :root {
-    --bg: #DDD8CE;
+    --bg: #E8E4DC;
     --card: #F2EFE9;
     --text: #1C1C1C;
     --hint: #6E6A63;
@@ -32,7 +30,8 @@
     position: relative; z-index: 1;
     display: flex; flex-direction: column;
     height: 100vh; height: 100dvh;
-    padding: 22px 0 calc(14px + env(safe-area-inset-bottom));
+    padding-top: calc(var(--tg-content-safe-area-inset-top, 0px) + 12px);
+    padding-bottom: calc(14px + env(safe-area-inset-bottom));
   }
   #app::before {
     content: ""; position: absolute; inset: 0; pointer-events: none;
@@ -75,7 +74,7 @@
   }
   canvas {
     background: var(--card);
-    border: 2px solid var(--accent);
+    border: 1px solid var(--accent);
     border-radius: 12px;
     display: block;
     touch-action: none;
@@ -92,7 +91,7 @@
     width: var(--btn);
     height: var(--btn);
     background: var(--card);
-    border: 2px solid var(--accent);
+    border: 1px solid var(--accent);
     color: var(--accent);
     border-radius: 10px;
     display: flex; align-items: center; justify-content: center;
@@ -145,6 +144,7 @@
   }
   #restart:active { opacity: 0.85; }
 
+  /* Экран смерти */
   #overlay {
     position: fixed; inset: 0;
     background: rgba(28,28,28,0.35);
@@ -152,36 +152,64 @@
     padding: 24px; z-index: 10;
   }
   #overlay.show { display: flex; }
+  
   #overlay .card {
+    position: relative;
     background: var(--card);
     border: 2px solid var(--accent);
     border-radius: 16px;
-    padding: 28px 24px 24px;
+    padding: 24px;
     width: 100%; max-width: 320px;
+    display: flex;
+    flex-direction: column;
     text-align: center;
   }
+  
+  /* Кнопка домика в левом верхнем углу */
+  .btn-home-top {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    display: flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px;
+    background: var(--accent); color: #FFFFFF;
+    border-radius: 8px;
+    text-decoration: none;
+  }
+  .btn-home-top:active { opacity: 0.8; }
+  .btn-home-top svg { width: 20px; height: 20px; fill: currentColor; }
+
+  /* Заголовок по центру на уровне домика */
   #overlay h2 {
-    margin: 0 0 18px;
-    font-size: 17px; font-weight: 600;
+    margin: 0 0 20px;
+    font-size: 20px;
+    font-weight: 700;
     color: var(--hint);
     text-transform: uppercase;
     letter-spacing: 0.08em;
+    line-height: 36px; /* Выравниваем по высоте кнопки домика */
+    text-align: center;
   }
+
   #overlay .big-score {
     font-size: 56px; font-weight: 700;
     color: var(--accent);
     line-height: 1;
-    margin: 0 0 6px;
+    margin: 0 0 4px;
     font-variant-numeric: tabular-nums;
   }
   #overlay .score-label {
     font-size: 14px; color: var(--hint);
     margin: 0 0 24px;
   }
+  
+  /* Кнопки снизу */
   .overlay-buttons {
     display: flex;
     gap: 12px;
+    margin-top: auto; /* Прижимаем к низу */
   }
+  
   .overlay-buttons button {
     flex: 1 1 0;
     border: none;
@@ -190,33 +218,31 @@
     font-weight: 600;
     font-family: inherit;
     color: #FFFFFF;
-  }
-  .overlay-buttons .btn-gray {
-    background: var(--gray);
-    padding: 13px 8px;
-    line-height: 1.2;
-  }
-  .overlay-buttons .btn-gray:active { opacity: 0.8; }
-  .overlay-buttons .btn-accent {
-    background: var(--accent);
+    height: 48px; /* Одинаковая высота для обеих кнопок */
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 3px;
-    padding: 9px 8px;
+    line-height: 1;
   }
-  .overlay-buttons .btn-accent:active { opacity: 0.85; }
+  
+  .btn-gray {
+    background: var(--gray);
+  }
+  .btn-gray:active { opacity: 0.8; }
+  
+  .btn-accent {
+    background: var(--accent);
+    gap: 6px; /* Отступ между текстом и ценой */
+  }
+  .btn-accent:active { opacity: 0.85; }
+  
   .revive-cost {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 4px;
-    font-size: 12px;
+    gap: 2px;
+    font-size: 13px;
     font-weight: 600;
-    color: #FFFFFF;
-    opacity: 0.95;
-    line-height: 1;
+    opacity: 0.9;
   }
   .revive-cost svg {
     width: 12px;
@@ -249,11 +275,16 @@
 
 <div id="overlay">
   <div class="card">
+    <a class="btn-home-top" href="index.html" title="В меню">
+      <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+    </a>
+    
     <h2>Игра окончена</h2>
     <p class="big-score" id="final-score">0</p>
     <p class="score-label">ваш счёт</p>
+    
     <div class="overlay-buttons">
-      <button class="btn-gray" id="again" type="button">Начать заново</button>
+      <button class="btn-gray" id="again" type="button">Заново</button>
       <button class="btn-accent" id="revive" type="button">
         <span>Воскреснуть</span>
         <span class="revive-cost">
@@ -272,7 +303,21 @@
   "use strict";
 
   var tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
-  if (tg) { try { tg.ready(); } catch (e) {} try { tg.expand(); } catch (e) {} }
+  if (tg) {
+    try { tg.ready(); } catch (e) {}
+    try { tg.expand(); } catch (e) {}
+    try {
+      function fixSafeArea() {
+        if (tg.isFullscreen && (!tg.contentSafeAreaInset || tg.contentSafeAreaInset.top === 0)) {
+          document.documentElement.style.setProperty('--tg-content-safe-area-inset-top', '60px');
+        } else if (tg.contentSafeAreaInset && tg.contentSafeAreaInset.top > 0) {
+          document.documentElement.style.setProperty('--tg-content-safe-area-inset-top', tg.contentSafeAreaInset.top + 'px');
+        }
+      }
+      fixSafeArea();
+      setTimeout(fixSafeArea, 500);
+    } catch(e){}
+  }
 
   var canvas = document.getElementById('game');
   var ctx = canvas.getContext('2d');
@@ -312,6 +357,7 @@
     if (typeof tg.isVersionAtLeast === 'function' && !tg.isVersionAtLeast('6.1')) return;
     try {
       if (type === 'light') tg.HapticFeedback.impactOccurred('light');
+      if (type === 'medium') tg.HapticFeedback.impactOccurred('medium');
       if (type === 'error') tg.HapticFeedback.notificationOccurred('error');
     } catch (e) {}
   }
@@ -413,7 +459,7 @@
     if (!food) placeFood();
     if (stepTimer) clearInterval(stepTimer);
     stepTimer = setInterval(tick, speed);
-    haptic('light');
+    haptic('medium');
     draw(0);
   }
 
@@ -481,7 +527,7 @@
       var gain = food.gold ? GOLD_SCORE : 1;
       score += gain;
       scoreEl.textContent = 'Счёт: ' + score;
-      haptic('light');
+      haptic('medium');
       eatPos = {x: food.x, y: food.y, gold: food.gold};
       foodEat = 0;
       spawnParticles(food.x, food.y, food.gold);
@@ -700,7 +746,7 @@
         e.preventDefault();
         btn.classList.add('pressed');
         setDir(btn.getAttribute('data-dir'));
-        haptic('light');
+        haptic('medium');
       }, {passive: false});
       btn.addEventListener('pointerup', function () {
         btn.classList.remove('pressed');

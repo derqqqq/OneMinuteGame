@@ -1,17 +1,19 @@
+
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <script>(function(){function fmt(a){if(a instanceof Error)return a.message;if(typeof a==="object"&&a!==null){try{return JSON.stringify(a)}catch(e){return String(a)}}return String(a)}function send(t,m,l){try{parent.postMessage({__stc:1,type:t,msg:m,line:l},"*")}catch(e){}}["log","info","warn","error"].forEach(function(m){var o=console[m];console[m]=function(){send(m,Array.prototype.map.call(arguments,fmt).join(" "));if(o)o.apply(console,arguments)}});window.addEventListener("error",function(e){send("error",e.message,e.lineno)});window.addEventListener("unhandledrejection",function(e){send("error","Promise: "+fmt(e.reason))});})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Игры</title>
+<title>Библиотека игр</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   :root {
     --bg: #E8E4DC;
     --card: #F2EFE9;
     --text: #1C1C1C;
-    --hint: #6E6A63;
+    --hint: #8A8578;
     --accent: #B8942E;
     --line: #D6D1C7;
     --edge: 20px;
@@ -27,7 +29,8 @@
     position: relative; z-index: 1;
     display: flex; flex-direction: column;
     height: 100vh; height: 100dvh;
-    padding: 26px 0 calc(14px + env(safe-area-inset-bottom));
+    padding-top: calc(var(--tg-content-safe-area-inset-top, 0px) + 24px);
+    padding-bottom: calc(14px + env(safe-area-inset-bottom));
   }
   #app::before {
     content: ""; position: absolute; inset: 0; pointer-events: none;
@@ -36,10 +39,23 @@
       linear-gradient(90deg, rgba(0,0,0,0.035) 1px, transparent 1px);
     background-size: 24px 24px; z-index: -1;
   }
+
   header { padding: 0 var(--edge) 16px; margin-bottom: 18px; }
-  h1 { font-size: 32px; font-weight: 600; margin: 0 0 8px; letter-spacing: -0.02em; }
-  .title-rule { width: 32px; height: 4px; background: var(--accent); border-radius: 2px; margin: 0 0 14px; }
+  .title-wrap {
+    display: inline-block;
+    margin-bottom: 14px;
+  }
+  h1 { 
+    font-size: 32px; font-weight: 600; margin: 0 0 8px; letter-spacing: -0.02em; 
+  }
+  .title-rule { 
+    height: 4px; 
+    background: var(--accent); 
+    border-radius: 2px; 
+    width: 100%; 
+  }
   .subtitle { font-size: 15px; line-height: 1.45; color: var(--hint); margin: 0; }
+  
   .pager { position: relative; flex: 1; min-height: 0; display: flex; align-items: stretch; }
   .pages {
     flex: 1; display: flex; overflow-x: auto; overflow-y: hidden;
@@ -56,6 +72,7 @@
     gap: 14px; padding: 4px 0; min-height: 0;
   }
   .page:not(:last-child) { margin-right: 20px; }
+  
   .card {
     position: relative; display: flex; align-items: center;
     background: var(--card); border: 1px solid var(--line);
@@ -104,7 +121,6 @@
   .icon-2048 span:nth-child(2) { opacity: 0.85; }
   .icon-2048 span:nth-child(3) { opacity: 0.7; }
   .icon-2048 span:nth-child(4) { opacity: 0.55; }
-
   .icon-mines { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); gap: 4px; width: 100%; height: 100%; }
   .icon-mines span { background: var(--accent); border-radius: 3px; position: relative; }
   .icon-mines span:nth-child(1) { opacity: 0.55; }
@@ -140,11 +156,12 @@
   .support-card h2 { font-size: 19px; font-weight: 600; margin: 0; }
   .support-card p { font-size: 14px; color: var(--hint); margin: 0; line-height: 1.45; }
   .support-card textarea {
-    width: 100%; min-height: 120px;
+    width: 100%; height: 120px;
     background: var(--bg); border: 1px solid var(--line);
     border-radius: 10px; padding: 12px;
     font-family: inherit; font-size: 14px; color: var(--text);
-    resize: vertical; outline: none;
+    resize: none;
+    outline: none;
     -webkit-user-select: text; user-select: text;
   }
   .support-card textarea::placeholder { color: var(--hint); }
@@ -160,6 +177,7 @@
   .support-status { font-size: 13px; color: var(--hint); margin: 0; min-height: 18px; }
   .support-status.ok { color: var(--accent); }
   .support-status.err { color: #e5484d; }
+  .support-thanks { font-size: 12px; color: var(--hint); text-align: center; opacity: 0.6; margin-top: auto; padding-top: 20px; }
 
   .dots { display: flex; justify-content: center; gap: 10px; padding: 16px 0 4px; }
   .dots span { width: 8px; height: 8px; border-radius: 50%; background: var(--line); transition: background 0.15s ease; }
@@ -169,9 +187,11 @@
 <body>
 <div id="app">
   <header>
-    <h1>Игры</h1>
-    <div class="title-rule"></div>
-    <p class="subtitle">Простые игры на пару минут. Без регистрации, без лишнего.</p>
+    <div class="title-wrap">
+      <h1>Библиотека игр</h1>
+      <div class="title-rule"></div>
+    </div>
+    <p class="subtitle">Легендарные игры для тех, кому надоели соц. сети и нашлась минутка на множество развлечений в одном боте!</p>
   </header>
 
   <div class="pager">
@@ -184,6 +204,7 @@
           <button id="bug-send" type="button">Отправить</button>
           <p class="support-status" id="bug-status"></p>
         </div>
+        <div class="support-thanks">Спасибо, что пользуетесь нашим ботом!</div>
       </div>
 
       <div class="page games">
@@ -229,7 +250,27 @@
   "use strict";
 
   var tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
-  if (tg) { try { tg.ready(); } catch (e) {} try { tg.expand(); } catch (e) {} }
+  if (tg) {
+    try { tg.ready(); } catch (e) {}
+    try { tg.expand(); } catch (e) {}
+    try {
+      function fixSafeArea() {
+        if (tg.isFullscreen && (!tg.contentSafeAreaInset || tg.contentSafeAreaInset.top === 0)) {
+          document.documentElement.style.setProperty('--tg-content-safe-area-inset-top', '60px');
+        } else if (tg.contentSafeAreaInset && tg.contentSafeAreaInset.top > 0) {
+          document.documentElement.style.setProperty('--tg-content-safe-area-inset-top', tg.contentSafeAreaInset.top + 'px');
+        }
+      }
+      fixSafeArea();
+      setTimeout(fixSafeArea, 500);
+    } catch(e){}
+  }
+
+  function haptic() {
+    if (tg && tg.HapticFeedback) {
+      try { tg.HapticFeedback.impactOccurred('medium'); } catch (e) {}
+    }
+  }
 
   var PAGE_GAP = 20;
   var pages = document.getElementById('pages');
@@ -255,9 +296,7 @@
     if (index === currentPage) return;
     currentPage = index;
     for (var i = 0; i < dots.length; i++) dots[i].classList.toggle('active', i === index);
-    if (tg && tg.HapticFeedback && typeof tg.isVersionAtLeast === 'function' && tg.isVersionAtLeast('6.1')) {
-      try { tg.HapticFeedback.impactOccurred('light'); } catch (e) {}
-    }
+    haptic();
   }
 
   function updateFromScroll() {
@@ -299,6 +338,40 @@
     setActive(1);
   });
 
+  // Управление мышью (drag)
+  var isDown = false;
+  var startX;
+  var scrollLeft;
+
+  pages.addEventListener('mousedown', function(e) {
+    isDown = true;
+    startX = e.pageX - pages.offsetLeft;
+    scrollLeft = pages.scrollLeft;
+  });
+  pages.addEventListener('mouseleave', function() { isDown = false; });
+  pages.addEventListener('mouseup', function() { isDown = false; });
+  pages.addEventListener('mousemove', function(e) {
+    if (!isDown) return;
+    e.preventDefault();
+    var x = e.pageX - pages.offsetLeft;
+    var walk = (x - startX) * 2;
+    pages.scrollLeft = scrollLeft - walk;
+  });
+
+  // Управление клавиатурой
+  window.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight') {
+      currentPage = clamp(currentPage + 1);
+      pages.scrollTo({ left: scrollLeftFor(currentPage), behavior: 'smooth' });
+      setActive(currentPage);
+    } else if (e.key === 'ArrowLeft') {
+      currentPage = clamp(currentPage - 1);
+      pages.scrollTo({ left: scrollLeftFor(currentPage), behavior: 'smooth' });
+      setActive(currentPage);
+    }
+  });
+
+  // Форма жалоб
   var FORMSPREE_URL = 'https://formspree.io/f/mgakwyqr';
   var textEl = document.getElementById('bug-text');
   var sendBtn = document.getElementById('bug-send');
@@ -325,6 +398,7 @@
         textEl.value = '';
         statusEl.textContent = 'Спасибо, сообщение отправлено.';
         statusEl.className = 'support-status ok';
+        haptic();
       } else {
         statusEl.textContent = 'Не удалось отправить. Попробуйте ещё раз.';
         statusEl.className = 'support-status err';

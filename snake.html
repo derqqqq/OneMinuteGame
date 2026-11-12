@@ -816,12 +816,23 @@
       // 2. Открываем окно оплаты
       tg.openInvoice(data.link, function (status) {
         if (status === 'paid') {
-          // 3. Если оплачено, просим сервер проверить (он посмотрит в базу)
-          fetch('https://my-bot.oneminutegame.workers.dev/api/check-payment', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: userId })
-          })
+          // 3. Если оплачено, ждем 2 секунды и проверяем базу
+          setTimeout(function() {
+            fetch('https://my-bot.oneminutegame.workers.dev/api/check-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userId: userId })
+            })
+            .then(function (res) { return res.json(); })
+            .then(function (checkData) {
+              if (checkData.paid) {
+                revive(); // База подтвердила — воскрешаем!
+              } else {
+                alert('Оплата еще обрабатывается. Попробуйте нажать "Воскреснуть" еще раз через пару секунд.');
+                btn.disabled = false;
+              }
+            });
+          }, 2000); // Пауза 2000 миллисекунд (2 секунды)
           .then(function (res) { return res.json(); })
           .then(function (checkData) {
             if (checkData.paid) {

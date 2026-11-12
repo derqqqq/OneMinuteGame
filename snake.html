@@ -832,13 +832,13 @@
                 btn.disabled = false;
               }
             });
-          }, 2000); // Пауза 2000 миллисекунд (2 секунды)
+          }, 1000); // Пауза 2000 миллисекунд (2 секунды)
         } else {
           btn.disabled = false;
           haptic('error');
         }
       });
-    })
+    }, 300)
     .catch(function (err) {
       alert('Не удалось создать счет. Проверьте интернет.');
       btn.disabled = false;

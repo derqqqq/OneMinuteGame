@@ -833,15 +833,6 @@
               }
             });
           }, 2000); // Пауза 2000 миллисекунд (2 секунды)
-          .then(function (res) { return res.json(); })
-          .then(function (checkData) {
-            if (checkData.paid) {
-              revive(); // База подтвердила оплату — воскрешаем!
-            } else {
-              alert('Оплата еще обрабатывается. Попробуйте нажать еще раз через секунду.');
-              btn.disabled = false;
-            }
-          });
         } else {
           btn.disabled = false;
           haptic('error');

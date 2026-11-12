@@ -17,7 +17,6 @@
     --edge: 20px;
     --btn: 54px;
     --gap: 5px;
-    --gray: #8C8880;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body {
@@ -41,11 +40,15 @@
     background-size: 24px 24px; z-index: -1;
   }
 
+  /* Шапка */
   header {
     position: relative;
     display: flex; align-items: center; justify-content: space-between;
-    padding: 0 var(--edge) 12px;
+    padding: 0 var(--edge);
     height: 40px;
+    margin-top: 6px;
+    margin-bottom: 12px;
+    flex-shrink: 0;
   }
   .pill {
     display: inline-flex; align-items: center; justify-content: center;
@@ -59,6 +62,7 @@
   }
   .pill:active { opacity: 0.8; }
   #score { font-variant-numeric: tabular-nums; }
+  
   h1 {
     position: absolute; left: 50%; top: 50%;
     transform: translate(-50%, -50%);
@@ -68,9 +72,11 @@
     line-height: 1;
   }
 
+  /* Поле */
   #board-wrap {
     flex: 1; display: flex; align-items: center; justify-content: center;
     min-height: 0; padding: 0 28px;
+    margin-bottom: 10px;
   }
   canvas {
     background: var(--card);
@@ -80,11 +86,13 @@
     touch-action: none;
   }
 
+  /* Крестовина (возвращена на место) */
   #pad {
     position: relative;
     width: calc(var(--btn) * 3 + var(--gap) * 2);
     height: calc(var(--btn) * 2 + var(--gap));
-    margin: 0 auto 16px;
+    margin: 0 auto 16px auto;
+    flex-shrink: 0;
   }
   #pad button {
     position: absolute;
@@ -129,6 +137,7 @@
   #pad button[data-dir="left"]  { left: 0; top: calc(var(--btn) / 2 + var(--gap) / 2); }
   #pad button[data-dir="right"] { right: 0; top: calc(var(--btn) / 2 + var(--gap) / 2); }
 
+  /* Кнопка Сначала */
   #restart {
     display: block;
     width: 50%;
@@ -141,6 +150,7 @@
     font-size: 15px;
     font-weight: 600;
     font-family: inherit;
+    flex-shrink: 0;
   }
   #restart:active { opacity: 0.85; }
 
@@ -165,7 +175,6 @@
     text-align: center;
   }
   
-  /* Кнопка домика в левом верхнем углу */
   .btn-home-top {
     position: absolute;
     top: 12px;
@@ -175,11 +184,12 @@
     background: var(--accent); color: #FFFFFF;
     border-radius: 8px;
     text-decoration: none;
+    z-index: 2;
   }
   .btn-home-top:active { opacity: 0.8; }
   .btn-home-top svg { width: 20px; height: 20px; fill: currentColor; }
 
-  /* Заголовок по центру на уровне домика */
+  /* Заголовок ИГРА ОКОНЧЕНА (сдвинут вправо на 5px) */
   #overlay h2 {
     margin: 0 0 20px;
     font-size: 20px;
@@ -187,67 +197,83 @@
     color: var(--hint);
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    line-height: 36px; /* Выравниваем по высоте кнопки домика */
+    
+    position: absolute;
+    top: 12px;
+    left: 5px; /* Сдвиг вправо */
+    width: 100%;
+    height: 36px;
+    line-height: 36px;
     text-align: center;
+    pointer-events: none;
+  }
+
+  .score-container {
+    margin-top: 48px; 
+    margin-bottom: 24px;
   }
 
   #overlay .big-score {
     font-size: 56px; font-weight: 700;
     color: var(--accent);
     line-height: 1;
-    margin: 0 0 4px;
+    margin: 0 0 6px;
     font-variant-numeric: tabular-nums;
   }
+  
   #overlay .score-label {
-    font-size: 14px; color: var(--hint);
-    margin: 0 0 24px;
+    font-size: 16px; color: var(--hint);
+    margin: 0;
   }
   
-  /* Кнопки снизу */
   .overlay-buttons {
     display: flex;
     gap: 12px;
-    margin-top: auto; /* Прижимаем к низу */
+    margin-top: auto;
   }
   
   .overlay-buttons button {
     flex: 1 1 0;
-    border: none;
     border-radius: 8px;
     font-size: 14px;
     font-weight: 600;
     font-family: inherit;
-    color: #FFFFFF;
-    height: 48px; /* Одинаковая высота для обеих кнопок */
+    height: 48px;
     display: flex;
     align-items: center;
     justify-content: center;
     line-height: 1;
+    white-space: nowrap;
   }
   
   .btn-gray {
-    background: var(--gray);
+    background: var(--card);
+    border: 1px solid var(--accent) !important;
+    color: var(--accent);
   }
-  .btn-gray:active { opacity: 0.8; }
+  .btn-gray:active { background: var(--line); }
   
   .btn-accent {
     background: var(--accent);
-    gap: 6px; /* Отступ между текстом и ценой */
+    border: 1px solid var(--accent) !important;
+    color: #FFFFFF;
+    gap: 6px;
   }
   .btn-accent:active { opacity: 0.85; }
   
   .revive-cost {
     display: flex;
     align-items: center;
-    gap: 2px;
-    font-size: 13px;
+    gap: 4px;
+    font-size: 14px;
     font-weight: 600;
-    opacity: 0.9;
+    opacity: 0.95;
   }
   .revive-cost svg {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
     display: block;
+    fill: #FFFFFF;
   }
 </style>
 </head>
@@ -270,7 +296,7 @@
     <button type="button" data-dir="down"><span class="arrow"></span></button>
   </div>
 
-  <button id="restart" type="button">Заново</button>
+  <button id="restart" type="button">Сначала</button>
 </div>
 
 <div id="overlay">
@@ -280,17 +306,20 @@
     </a>
     
     <h2>Игра окончена</h2>
-    <p class="big-score" id="final-score">0</p>
-    <p class="score-label">ваш счёт</p>
+    
+    <div class="score-container">
+      <p class="big-score" id="final-score">0</p>
+      <p class="score-label">ваш счёт</p>
+    </div>
     
     <div class="overlay-buttons">
-      <button class="btn-gray" id="again" type="button">Заново</button>
+      <button class="btn-gray" id="again" type="button">Сначала</button>
       <button class="btn-accent" id="revive" type="button">
         <span>Воскреснуть</span>
         <span class="revive-cost">
           <span>5</span>
           <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path fill="currentColor" d="M12 1.5c.3 0 .55.2.65.48l1.9 5.32 5.32 1.9c.28.1.48.35.48.65s-.2.55-.48.65l-5.32 1.9-1.9 5.32a.68.68 0 0 1-1.3 0l-1.9-5.32-5.32-1.9a.68.68 0 0 1 0-1.3l5.32-1.9 1.9-5.32c.1-.28.35-.48.65-.48z"/>
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
           </svg>
         </span>
       </button>
@@ -307,15 +336,11 @@
     try { tg.ready(); } catch (e) {}
     try { tg.expand(); } catch (e) {}
     try {
-      function fixSafeArea() {
-        if (tg.isFullscreen && (!tg.contentSafeAreaInset || tg.contentSafeAreaInset.top === 0)) {
-          document.documentElement.style.setProperty('--tg-content-safe-area-inset-top', '60px');
-        } else if (tg.contentSafeAreaInset && tg.contentSafeAreaInset.top > 0) {
-          document.documentElement.style.setProperty('--tg-content-safe-area-inset-top', tg.contentSafeAreaInset.top + 'px');
-        }
+      if (tg.isFullscreen && (!tg.contentSafeAreaInset || tg.contentSafeAreaInset.top === 0)) {
+        document.documentElement.style.setProperty('--tg-content-safe-area-inset-top', '60px');
+      } else if (tg.contentSafeAreaInset && tg.contentSafeAreaInset.top > 0) {
+        document.documentElement.style.setProperty('--tg-content-safe-area-inset-top', tg.contentSafeAreaInset.top + 'px');
       }
-      fixSafeArea();
-      setTimeout(fixSafeArea, 500);
     } catch(e){}
   }
 
@@ -328,16 +353,16 @@
 
   var COLS = 12, ROWS = 12;
   var START_SPEED = 180;
-  var MIN_SPEED = 95;
+  var MIN_SPEED = 130; 
   var FOOD_APPEAR = 180;
   var FOOD_EAT = 140;
   var BORDER = 2;
   var GOLD_CHANCE = 0.05;
   var GOLD_GROWTH = 3;
   var GOLD_SCORE = 3;
+
   var cell = 0;
   var dpr = 1;
-
   var snake = null, prevSnake = null, dir, nextDir, food, score, alive;
   var stepTimer = null;
   var speed = START_SPEED;
@@ -413,6 +438,44 @@
     return out;
   }
 
+  function placeFood() {
+    if (!snake) return;
+    var guard = 0;
+    while (guard < 1000) {
+      guard++;
+      var f = {x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS)};
+      var busy = false;
+      for (var i = 0; i < snake.length; i++) {
+        if (snake[i].x === f.x && snake[i].y === f.y) { busy = true; break; }
+      }
+      if (!busy) {
+        food = {x: f.x, y: f.y, gold: Math.random() < GOLD_CHANCE};
+        foodAppear = 0;
+        return;
+      }
+    }
+    food = {x: 0, y: 0, gold: false};
+    foodAppear = 0;
+  }
+
+  function spawnParticles(cx, cy, gold) {
+    var count = gold ? 12 : 7;
+    var baseColor = gold ? '#D4A817' : '#C0453F';
+    for (var i = 0; i < count; i++) {
+      var ang = Math.random() * Math.PI * 2;
+      var spd = cell * (0.04 + Math.random() * 0.06);
+      particles.push({
+        x: cx * cell + cell / 2,
+        y: cy * cell + cell / 2,
+        vx: Math.cos(ang) * spd,
+        vy: Math.sin(ang) * spd,
+        life: 1,
+        size: Math.max(2, cell * (0.06 + Math.random() * 0.05)),
+        color: baseColor
+      });
+    }
+  }
+
   function reset() {
     snake = [{x: 6, y: 6}, {x: 5, y: 6}, {x: 4, y: 6}];
     prevSnake = cloneSnake(snake);
@@ -461,44 +524,6 @@
     stepTimer = setInterval(tick, speed);
     haptic('medium');
     draw(0);
-  }
-
-  function placeFood() {
-    if (!snake) return;
-    var guard = 0;
-    while (guard < 1000) {
-      guard++;
-      var f = {x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS)};
-      var busy = false;
-      for (var i = 0; i < snake.length; i++) {
-        if (snake[i].x === f.x && snake[i].y === f.y) { busy = true; break; }
-      }
-      if (!busy) {
-        food = {x: f.x, y: f.y, gold: Math.random() < GOLD_CHANCE};
-        foodAppear = 0;
-        return;
-      }
-    }
-    food = {x: 0, y: 0, gold: false};
-    foodAppear = 0;
-  }
-
-  function spawnParticles(cx, cy, gold) {
-    var count = gold ? 12 : 7;
-    var baseColor = gold ? '#D4A817' : '#C0453F';
-    for (var i = 0; i < count; i++) {
-      var ang = Math.random() * Math.PI * 2;
-      var spd = cell * (0.04 + Math.random() * 0.06);
-      particles.push({
-        x: cx * cell + cell / 2,
-        y: cy * cell + cell / 2,
-        vx: Math.cos(ang) * spd,
-        vy: Math.sin(ang) * spd,
-        life: 1,
-        size: Math.max(2, cell * (0.06 + Math.random() * 0.05)),
-        color: baseColor
-      });
-    }
   }
 
   function tick() {
@@ -569,12 +594,8 @@
     var dt = now - lastFrame;
     lastFrame = now;
 
-    if (food && foodAppear < 1) {
-      foodAppear = Math.min(1, foodAppear + dt / FOOD_APPEAR);
-    }
-    if (foodEat < 1) {
-      foodEat = Math.min(1, foodEat + dt / FOOD_EAT);
-    }
+    if (food && foodAppear < 1) foodAppear = Math.min(1, foodAppear + dt / FOOD_APPEAR);
+    if (foodEat < 1) foodEat = Math.min(1, foodEat + dt / FOOD_EAT);
 
     for (var i = particles.length - 1; i >= 0; i--) {
       var p = particles[i];
@@ -590,10 +611,6 @@
     requestAnimationFrame(render);
   }
 
-  function lerp(a, b, t) {
-    return a + (b - a) * t;
-  }
-
   function draw(phase) {
     if (!cell || !snake) return;
     var px = cell * COLS;
@@ -602,22 +619,12 @@
     ctx.strokeStyle = 'rgba(0,0,0,0.05)';
     ctx.lineWidth = 1;
     for (var i = 1; i < COLS; i++) {
-      ctx.beginPath();
-      ctx.moveTo(i * cell + 0.5, 0);
-      ctx.lineTo(i * cell + 0.5, px);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(0, i * cell + 0.5);
-      ctx.lineTo(px, i * cell + 0.5);
-      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(i * cell + 0.5, 0); ctx.lineTo(i * cell + 0.5, px); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, i * cell + 0.5); ctx.lineTo(px, i * cell + 0.5); ctx.stroke();
     }
 
     if (food) drawFood(food.x, food.y, easeOut(foodAppear), false, food.gold);
-
-    if (eatPos && foodEat < 1) {
-      var shrink = 1 - easeIn(foodEat);
-      drawFood(eatPos.x, eatPos.y, shrink, true, eatPos.gold);
-    }
+    if (eatPos && foodEat < 1) drawFood(eatPos.x, eatPos.y, 1 - easeIn(foodEat), true, eatPos.gold);
 
     for (var k = 0; k < particles.length; k++) {
       var pt = particles[k];
@@ -635,13 +642,12 @@
       var pv = prevSnake[j] || snake[j + 1] || s;
       var t = total > 1 ? j / (total - 1) : 0;
       var alpha = segmentAlphas[j] != null ? segmentAlphas[j] : (1 - t * 0.25);
-
       var taper = 1 - t * 0.35;
       var basePad = j === 0 ? 0.04 : (0.14 + t * 0.10);
       var pad = Math.max(2, Math.floor(cell * basePad * (j === 0 ? 1 : taper)));
 
-      var fx = lerp(pv.x, s.x, phase);
-      var fy = lerp(pv.y, s.y, phase);
+      var fx = pv.x + (s.x - pv.x) * phase;
+      var fy = pv.y + (s.y - pv.y) * phase;
 
       var x = fx * cell + pad;
       var y = fy * cell + pad;
@@ -748,15 +754,9 @@
         setDir(btn.getAttribute('data-dir'));
         haptic('medium');
       }, {passive: false});
-      btn.addEventListener('pointerup', function () {
-        btn.classList.remove('pressed');
-      });
-      btn.addEventListener('pointercancel', function () {
-        btn.classList.remove('pressed');
-      });
-      btn.addEventListener('pointerleave', function () {
-        btn.classList.remove('pressed');
-      });
+      btn.addEventListener('pointerup', function () { btn.classList.remove('pressed'); });
+      btn.addEventListener('pointercancel', function () { btn.classList.remove('pressed'); });
+      btn.addEventListener('pointerleave', function () { btn.classList.remove('pressed'); });
     })(padButtons[b]);
   }
 
@@ -788,7 +788,33 @@
 
   document.getElementById('restart').addEventListener('click', reset);
   document.getElementById('again').addEventListener('click', reset);
-  document.getElementById('revive').addEventListener('click', revive);
+  
+  document.getElementById('revive').addEventListener('click', function () {
+    var btn = this;
+    if (!tg) { revive(); return; }
+    btn.disabled = true;
+
+    fetch('https://my-bot.oneminutegame.workers.dev/api/create-invoice', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    })
+    .then(function (res) { return res.json(); })
+    .then(function (data) {
+      if (!data.ok) throw new Error('Server error');
+      tg.openInvoice(data.link, function (status) {
+        if (status === 'paid') {
+          revive();
+        } else {
+          btn.disabled = false;
+          haptic('error');
+        }
+      });
+    })
+    .catch(function (err) {
+      alert('Не удалось создать счет. Проверьте интернет.');
+      btn.disabled = false;
+    });
+  });
 
   window.addEventListener('resize', fitCanvas);
   if (window.ResizeObserver) new ResizeObserver(fitCanvas).observe(boardWrap);

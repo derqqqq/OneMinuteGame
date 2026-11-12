@@ -793,17 +793,44 @@
     var btn = this;
     if (!tg) { revive(); return; }
     btn.disabled = true;
-
+  
+    // Получаем ID пользователя Telegram
+    var userId = tg.initDataUnsafe && tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : null;
+  
+    if (!userId) {
+        alert('Ошибка: Не удалось получить ID пользователя.');
+        btn.disabled = false;
+        return;
+    }
+  
+    // 1. Просим сервер создать счет
     fetch('https://my-bot.oneminutegame.workers.dev/api/create-invoice', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: userId })
     })
     .then(function (res) { return res.json(); })
     .then(function (data) {
       if (!data.ok) throw new Error('Server error');
+      
+      // 2. Открываем окно оплаты
       tg.openInvoice(data.link, function (status) {
         if (status === 'paid') {
-          revive();
+          // 3. Если оплачено, просим сервер проверить (он посмотрит в базу)
+          fetch('https://my-bot.oneminutegame.workers.dev/api/check-payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: userId })
+          })
+          .then(function (res) { return res.json(); })
+          .then(function (checkData) {
+            if (checkData.paid) {
+              revive(); // База подтвердила оплату — воскрешаем!
+            } else {
+              alert('Оплата еще обрабатывается. Попробуйте нажать еще раз через секунду.');
+              btn.disabled = false;
+            }
+          });
         } else {
           btn.disabled = false;
           haptic('error');

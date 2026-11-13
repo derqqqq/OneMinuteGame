@@ -61,11 +61,15 @@
   .score-area {
     display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
   }
+  
+  /* Одинаковая ширина и центрирование текста */
   #time-display, #high-score {
     font-size: 13px; font-weight: 600; height: 32px;
     display: flex; align-items: center; justify-content: center;
     padding: 0 10px; border-radius: 8px;
-    font-variant-numeric: tabular-nums; min-width: 100px;
+    font-variant-numeric: tabular-nums; 
+    width: 110px; /* Фиксированная ширина */
+    text-align: center;
   }
   #time-display { background: var(--accent); color: #FFFFFF; }
   #high-score { background: var(--line); color: var(--hint); }
@@ -268,7 +272,7 @@
 <div id="win-overlay">
   <div class="card">
     <h2>Победа</h2>
-    <p>Поле очищено от мин!</p>
+    <p>Ваше время: <span id="win-time" style="color: var(--accent); font-weight: bold; font-size: 20px;">00:00</span></p>
     <div class="overlay-buttons">
       <a class="btn-gray" href="index.html">В меню</a>
       <button class="btn-accent" id="continue-btn" type="button">Ещё раз</button>
@@ -302,6 +306,7 @@
   var timeDisplay = document.getElementById('time-display');
   var highScoreEl = document.getElementById('high-score');
   var finalTimeEl = document.getElementById('final-time');
+  var winTimeEl = document.getElementById('win-time');
   var overlay = document.getElementById('overlay');
   var winOverlay = document.getElementById('win-overlay');
   
@@ -388,7 +393,6 @@
     
     stopTimer();
     
-    // Сброс таймера на экране
     timeDisplay.textContent = 'Время: 00:00';
     highScoreEl.textContent = 'Рекорд: ' + (highScore > 0 ? formatTime(highScore) : '--:--');
 
@@ -488,7 +492,6 @@
         explodedCell = { r: r, c: c };
         stopTimer();
         
-        // Фиксируем время проигрыша
         var timeTaken = Math.floor((Date.now() - startTime) / 1000);
         finalTimeEl.textContent = formatTime(timeTaken);
         
@@ -546,6 +549,10 @@
       stopTimer();
       var timeTaken = Math.floor((Date.now() - startTime) / 1000);
       saveHighScore(timeTaken);
+      
+      // Выводим время на экран победы
+      winTimeEl.textContent = formatTime(timeTaken);
+      
       haptic('medium');
       
       for (var r = 0; r < SIZE; r++) {
@@ -682,7 +689,6 @@
     overlay.classList.remove('show');
     haptic('medium');
     
-    // Продолжаем отсчет с того же места (стартовое время не меняем)
     startTimer(); 
   }
 

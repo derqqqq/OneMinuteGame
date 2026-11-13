@@ -152,9 +152,9 @@
   .overlay-record { font-size: 16px; color: var(--hint); margin-bottom: 24px; font-weight: 600; }
   
   .overlay-buttons { display: flex; gap: 12px; margin-top: auto; }
-  .overlay-buttons button {
+  .overlay-buttons button, .overlay-buttons a {
     flex: 1 1 0; border-radius: 8px; font-size: 14px; font-weight: 600;
-    font-family: inherit; height: 48px;
+    font-family: inherit; height: 48px; text-decoration: none;
     display: flex; align-items: center; justify-content: center;
     line-height: 1; white-space: nowrap;
   }
@@ -164,6 +164,27 @@
   .btn-accent:active { opacity: 0.85; }
   .revive-cost { display: flex; align-items: center; gap: 4px; font-size: 14px; font-weight: 600; opacity: 0.95; }
   .revive-cost svg { width: 14px; height: 14px; display: block; fill: #FFFFFF; }
+
+  /* Экран победы */
+  #win-overlay {
+    position: fixed; inset: 0; background: rgba(28,28,28,0.5);
+    display: none; align-items: center; justify-content: center;
+    padding: 24px; z-index: 20; /* Поверх экрана смерти */
+  }
+  #win-overlay.show { display: flex; }
+  #win-overlay .card {
+    background: var(--card); border: 2px solid var(--accent);
+    border-radius: 16px; padding: 32px 24px 24px;
+    width: 100%; max-width: 320px;
+    display: flex; flex-direction: column; text-align: center;
+  }
+  #win-overlay h2 {
+    font-size: 26px; font-weight: 700; color: var(--accent);
+    margin: 0 0 10px;
+  }
+  #win-overlay p {
+    font-size: 16px; color: var(--hint); margin: 0 0 24px; line-height: 1.4;
+  }
 </style>
 </head>
 <body>
@@ -189,6 +210,7 @@
   <button id="restart" type="button">Сначала</button>
 </div>
 
+<!-- Экран смерти -->
 <div id="overlay">
   <div class="card">
     <a class="btn-home-top" href="index.html" title="В меню">
@@ -215,6 +237,18 @@
           </svg>
         </span>
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- Экран победы -->
+<div id="win-overlay">
+  <div class="card">
+    <h2>Победа!</h2>
+    <p>Вы собрали 2048!<br>Продолжите, чтобы побить свой рекорд.</p>
+    <div class="overlay-buttons">
+      <a class="btn-gray" href="index.html">В меню</a>
+      <button class="btn-accent" id="continue-btn" type="button">Продолжить</button>
     </div>
   </div>
 </div>
@@ -248,6 +282,9 @@
   var overlay = document.getElementById('overlay');
   var finalScoreEl = document.getElementById('final-score');
   var overlayRecordEl = document.getElementById('overlay-record');
+  
+  var winOverlay = document.getElementById('win-overlay');
+  var continueBtn = document.getElementById('continue-btn');
 
   var SIZE = 4;
   var GAP = 8;
@@ -260,6 +297,7 @@
   var isAnimating = false;
   var userId = null;
   var cellSize = 0;
+  var hasWon = false; // Флаг для отслеживания победы
 
   if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
     userId = tg.initDataUnsafe.user.id;
@@ -394,6 +432,8 @@
     scoreEl.textContent = 'Счёт: 0';
     gameOver = false;
     isAnimating = false;
+    hasWon = false; // Сбрасываем флаг победы
+    winOverlay.classList.remove('show');
     overlay.classList.remove('show');
     
     addRandomTile();
@@ -404,7 +444,7 @@
   var touchStart = null;
 
   function handleSwipe(dx, dy) {
-    if (gameOver || isAnimating) return;
+    if (gameOver || isAnimating || winOverlay.classList.contains('show')) return;
     if (Math.abs(dx) < 30 && Math.abs(dy) < 30) return;
 
     if (Math.abs(dx) > Math.abs(dy)) {
@@ -503,6 +543,17 @@
             scoreEl.textContent = 'Счёт: ' + score;
             haptic('light');
             
+            // Проверка на победу
+            if (newVal === 2048 && !hasWon) {
+              hasWon = true;
+              setTimeout(function() {
+                winOverlay.classList.add('show');
+                if (tg && tg.HapticFeedback && typeof tg.isVersionAtLeast === 'function' && tg.isVersionAtLeast('6.1')) {
+                  tg.HapticFeedback.notificationOccurred('success');
+                }
+              }, 300); // Небольшая задержка, чтобы анимация слияния завершилась
+            }
+
             removeTile(current.id);
             setTile(targetCell.id, newVal, nr, nc);
             targetCell.val = newVal;
@@ -525,6 +576,9 @@
   }
 
   function checkGameOver() {
+    // Если экран победы открыт, не показываем экран смерти
+    if (winOverlay.classList.contains('show')) return;
+
     for (var r = 0; r < SIZE; r++) {
       for (var c = 0; c < SIZE; c++) {
         if (grid[r][c] === null) return;
@@ -587,6 +641,12 @@
   document.getElementById('restart').addEventListener('click', reset);
   document.getElementById('again').addEventListener('click', reset);
   
+  // Обработчик кнопки "Продолжить" на экране победы
+  continueBtn.addEventListener('click', function () {
+    winOverlay.classList.remove('show');
+    checkGameOver(); // Проверяем, есть ли еще ходы
+  });
+
   document.getElementById('revive').addEventListener('click', function () {
     var btn = this;
     if (!tg) { reviveGame(); return; }

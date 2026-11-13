@@ -23,6 +23,7 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     overflow: hidden; user-select: none; -webkit-user-select: none;
   }
+  
   #app {
     position: relative; z-index: 1;
     display: flex; flex-direction: column;
@@ -38,12 +39,10 @@
     background-size: 24px 24px; z-index: -1;
   }
 
-  /* Шапка. Выравниваем всё по верхнему краю */
+  /* Шапка */
   header {
     position: relative;
-    display: flex; 
-    align-items: flex-start; /* ВАЖНО: прижимает к верху */
-    justify-content: space-between;
+    display: flex; align-items: flex-start; justify-content: space-between;
     padding: 0 var(--edge);
     height: 40px;
     margin-top: 6px;
@@ -55,209 +54,115 @@
     background: var(--accent); color: #FFFFFF;
     font-size: 15px; font-weight: 600;
     padding: 0 16px; border-radius: 8px;
-    text-decoration: none; font-family: inherit;
-    border: none; line-height: 1;
-    white-space: nowrap;
-    height: 32px; /* Высота как у плашек */
+    text-decoration: none; height: 40px;
   }
   .pill:active { opacity: 0.8; }
   
-  /* Плашки */
   .score-area {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 4px;
+    display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
   }
   #score, #high-score {
-    font-size: 13px;
-    font-weight: 600;
-    height: 32px;
+    font-size: 13px; font-weight: 600; height: 32px;
     display: flex; align-items: center; justify-content: center;
-    padding: 0 8px;
-    border-radius: 8px;
-    font-variant-numeric: tabular-nums;
-    min-width: 90px;
+    padding: 0 10px; border-radius: 8px;
+    font-variant-numeric: tabular-nums; min-width: 100px;
   }
-  #score {
-    background: var(--accent);
-    color: #FFFFFF;
-  }
-  #high-score {
-    background: var(--line);
-    color: var(--hint);
-  }
+  #score { background: var(--accent); color: #FFFFFF; }
+  #high-score { background: var(--line); color: var(--hint); }
   
-  /* Заголовок строго по центру, но привязан к верху */
   h1 {
-    position: absolute; left: 50%; top: 16px; /* Центр первой плашки */
+    position: absolute; left: 50%; top: 20px;
     transform: translate(-50%, -50%);
-    font-size: 26px; font-weight: 700; margin: 0;
-    letter-spacing: -0.02em;
-    white-space: nowrap;
-    line-height: 1;
+    font-size: 26px; font-weight: 700; margin: 0; line-height: 1;
   }
 
-  /* Поле */
+  /* Игровое поле */
   #board-wrap {
     flex: 1; display: flex; align-items: center; justify-content: center;
-    min-height: 0; padding: 0 20px;
-    overflow: hidden;
+    min-height: 0; padding: 0 20px; overflow: hidden;
   }
-  
   #game-container {
     position: relative;
     background: var(--line);
     border: 2px solid var(--accent);
     border-radius: 12px;
-    touch-action: none;
     aspect-ratio: 1 / 1;
-    max-width: 100%;
-    max-height: 100%;
-    width: 100%; 
+    max-width: 100%; max-height: 100%; width: 100%;
+    display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr);
+    gap: 8px; padding: 8px;
+    touch-action: none;
   }
-  
-  /* Сетка. Делаем фон меньше контейнера на размер рамки, чтобы отцентровать */
-  #grid-bg {
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    pointer-events: none;
-    border-radius: 10px;
-    background-image: 
-      linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0,0,0,0.06) 1px, transparent 1px);
+  .cell {
+    background: rgba(0,0,0,0.04);
+    border-radius: 6px;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
   }
-
   .tile {
     position: absolute;
     display: flex; align-items: center; justify-content: center;
-    border-radius: 8px;
-    font-weight: 700;
-    font-size: 8vmin;
+    border-radius: 8px; font-weight: 700;
     transition: transform 0.1s ease-in-out, background-color 0.1s ease;
-    will-change: transform;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    color: #FFFFFF !important;
+    will-change: transform; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    color: #FFFFFF !important; z-index: 2;
   }
 
+  /* Кнопка снизу */
   #restart {
-    display: block;
-    width: 70%;
-    margin: 24px auto 10px;
-    padding: 16px;
-    background: var(--accent);
-    color: #FFFFFF;
-    border: none;
-    border-radius: 10px;
-    font-size: 18px;
-    font-weight: 700;
-    font-family: inherit;
-    flex-shrink: 0;
+    display: block; width: 70%; margin: 24px auto 10px;
+    padding: 16px; background: var(--accent); color: #FFFFFF;
+    border: none; border-radius: 10px; font-size: 18px; font-weight: 700;
+    font-family: inherit; flex-shrink: 0;
   }
   #restart:active { opacity: 0.85; }
 
+  /* Экран смерти */
   #overlay {
-    position: fixed; inset: 0;
-    background: rgba(28,28,28,0.35);
+    position: fixed; inset: 0; background: rgba(28,28,28,0.35);
     display: none; align-items: center; justify-content: center;
     padding: 24px; z-index: 10;
   }
   #overlay.show { display: flex; }
-  
   #overlay .card {
-    position: relative;
-    background: var(--card);
-    border: 2px solid var(--accent);
-    border-radius: 16px;
-    padding: 24px;
-    width: 100%; max-width: 320px;
-    display: flex;
-    flex-direction: column;
-    text-align: center;
+    position: relative; background: var(--card);
+    border: 2px solid var(--accent); border-radius: 16px;
+    padding: 24px; width: 100%; max-width: 320px;
+    display: flex; flex-direction: column; text-align: center;
   }
-  
   .btn-home-top {
-    position: absolute;
-    top: 12px;
-    left: 12px;
+    position: absolute; top: 12px; left: 12px;
     display: flex; align-items: center; justify-content: center;
-    width: 36px; height: 36px;
-    background: var(--accent); color: #FFFFFF;
-    border-radius: 8px;
-    text-decoration: none;
-    z-index: 2;
+    width: 36px; height: 36px; background: var(--accent);
+    color: #FFFFFF; border-radius: 8px; text-decoration: none; z-index: 2;
   }
   .btn-home-top:active { opacity: 0.8; }
   .btn-home-top svg { width: 20px; height: 20px; fill: currentColor; }
 
   #overlay h2 {
-    margin: 0 0 20px;
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--hint);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    position: absolute;
-    top: 12px;
-    left: 5px; 
-    width: 100%;
-    height: 36px;
-    line-height: 36px;
-    text-align: center;
-    pointer-events: none;
+    margin: 0 0 20px; font-size: 20px; font-weight: 700; color: var(--hint);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    position: absolute; top: 12px; left: 5px; width: 100%; height: 36px;
+    line-height: 36px; text-align: center; pointer-events: none;
   }
-
   .score-container { margin-top: 48px; margin-bottom: 24px; }
-
   #overlay .big-score {
-    font-size: 72px; 
-    font-weight: 700;
-    color: var(--accent);
-    line-height: 1;
-    margin: 0 0 6px;
-    font-variant-numeric: tabular-nums;
+    font-size: 72px; font-weight: 700; color: var(--accent);
+    line-height: 1; margin: 0 0 6px; font-variant-numeric: tabular-nums;
   }
-  
-  #overlay .score-label { 
-    font-size: 20px; 
-    color: var(--hint); 
-    margin: 0; 
-  }
-
+  #overlay .score-label { font-size: 20px; color: var(--hint); margin: 0; }
   .overlay-record { font-size: 16px; color: var(--hint); margin-bottom: 24px; font-weight: 600; }
   
   .overlay-buttons { display: flex; gap: 12px; margin-top: auto; }
-  
   .overlay-buttons button {
-    flex: 1 1 0;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    font-family: inherit;
-    height: 48px;
+    flex: 1 1 0; border-radius: 8px; font-size: 14px; font-weight: 600;
+    font-family: inherit; height: 48px;
     display: flex; align-items: center; justify-content: center;
     line-height: 1; white-space: nowrap;
   }
-  
-  .btn-gray {
-    background: var(--card);
-    border: 1px solid var(--accent) !important;
-    color: var(--accent);
-  }
+  .btn-gray { background: var(--card); border: 1px solid var(--accent) !important; color: var(--accent); }
   .btn-gray:active { background: var(--line); }
-  
-  .btn-accent {
-    background: var(--accent);
-    border: 1px solid var(--accent) !important;
-    color: #FFFFFF;
-    gap: 6px;
-  }
+  .btn-accent { background: var(--accent); border: 1px solid var(--accent) !important; color: #FFFFFF; gap: 6px; }
   .btn-accent:active { opacity: 0.85; }
-  
-  .revive-cost {
-    display: flex; align-items: center; gap: 4px;
-    font-size: 14px; font-weight: 600; opacity: 0.95;
-  }
+  .revive-cost { display: flex; align-items: center; gap: 4px; font-size: 14px; font-weight: 600; opacity: 0.95; }
   .revive-cost svg { width: 14px; height: 14px; display: block; fill: #FFFFFF; }
 </style>
 </head>
@@ -274,7 +179,10 @@
 
   <div id="board-wrap">
     <div id="game-container">
-      <div id="grid-bg"></div>
+      <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+      <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+      <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+      <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
     </div>
   </div>
 
@@ -324,7 +232,6 @@
         tg.disableVerticalSwipes();
       }
     } catch(e) {}
-    
     try {
       if (tg.isFullscreen && (!tg.contentSafeAreaInset || tg.contentSafeAreaInset.top === 0)) {
         document.documentElement.style.setProperty('--tg-content-safe-area-inset-top', '60px');
@@ -336,7 +243,6 @@
 
   var boardWrap = document.getElementById('board-wrap');
   var container = document.getElementById('game-container');
-  var gridBg = document.getElementById('grid-bg');
   var scoreEl = document.getElementById('score');
   var highScoreEl = document.getElementById('high-score');
   var overlay = document.getElementById('overlay');
@@ -344,10 +250,7 @@
   var overlayRecordEl = document.getElementById('overlay-record');
 
   var SIZE = 4;
-  // Используем доли, чтобы пересчитать сетку точнее
-  var GAP = 2; // 2% на отступ
-  var TILE = (100 - GAP * (SIZE + 1)) / SIZE; // 23%
-  
+  var GAP = 8;
   var grid = [];
   var tiles = {}; 
   var tileIdCounter = 0;
@@ -356,6 +259,7 @@
   var gameOver = false;
   var isAnimating = false;
   var userId = null;
+  var cellSize = 0;
 
   if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
     userId = tg.initDataUnsafe.user.id;
@@ -380,17 +284,17 @@
   }
 
   var colors = {
-    2:    { bg: '#D4C48E', text: '#FFFFFF' }, 
-    4:    { bg: '#C5B076', text: '#FFFFFF' }, 
-    8:    { bg: '#B09650', text: '#FFFFFF' },
-    16:   { bg: '#CDAA4A', text: '#FFFFFF' },
-    32:   { bg: '#B8942E', text: '#FFFFFF' },
-    64:   { bg: '#A38027', text: '#FFFFFF' },
-    128:  { bg: '#8E6C20', text: '#FFFFFF' },
-    256:  { bg: '#7A5819', text: '#FFFFFF' },
-    512:  { bg: '#664413', text: '#FFFFFF' },
-    1024: { bg: '#52300D', text: '#FFFFFF' },
-    2048: { bg: '#3E1C07', text: '#FFFFFF' }
+    2:    '#D4C48E', 
+    4:    '#C5B076', 
+    8:    '#B09650',
+    16:   '#CDAA4A',
+    32:   '#B8942E',
+    64:   '#A38027',
+    128:  '#8E6C20',
+    256:  '#7A5819',
+    512:  '#664413',
+    1024: '#52300D',
+    2048: '#3E1C07'
   };
 
   function haptic(type) {
@@ -404,29 +308,33 @@
   }
 
   function fitContainer() {
-    // Настраиваем сетку: размер ячейки + отступ
-    var bgSize = (TILE + GAP) + '%';
-    gridBg.style.backgroundSize = bgSize + ' ' + bgSize;
-    // Смещаем так, чтобы линии были по центру между отступами
-    // Учитываем, что фон начинается с 0, а не с GAP
-    gridBg.style.backgroundPosition = GAP + '% ' + GAP + '%';
+    var containerSize = container.clientWidth; 
+    var innerSize = containerSize - (GAP * 2); 
+    cellSize = (innerSize - GAP * (SIZE - 1)) / SIZE;
+    
+    for (var id in tiles) {
+      var t = tiles[id];
+      t.el.style.width = cellSize + 'px';
+      t.el.style.height = cellSize + 'px';
+      t.el.style.fontSize = (cellSize * 0.4) + 'px';
+      updateTilePosition(t);
+    }
   }
 
-  function setTilePosition(t) {
-    var xPercent = (GAP + t.col * (TILE + GAP)) / TILE * 100;
-    var yPercent = (GAP + t.row * (TILE + GAP)) / TILE * 100;
-    t.el.style.transform = 'translate(' + xPercent + '%, ' + yPercent + '%)';
+  function updateTilePosition(t) {
+    var x = GAP + t.col * (cellSize + GAP);
+    var y = GAP + t.row * (cellSize + GAP);
+    t.el.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
   }
 
   function createTileEl(val, r, c) {
     var el = document.createElement('div');
     el.className = 'tile';
     
-    el.style.width = TILE + '%';
-    el.style.height = TILE + '%';
-    
-    var color = colors[val] || { bg: '#000', text: '#fff' };
-    el.style.backgroundColor = color.bg;
+    el.style.width = cellSize + 'px';
+    el.style.height = cellSize + 'px';
+    el.style.fontSize = (cellSize * 0.4) + 'px';
+    el.style.backgroundColor = colors[val] || '#000';
     el.textContent = val;
 
     container.appendChild(el);
@@ -436,16 +344,14 @@
   function setTile(id, val, r, c) {
     if (!tiles[id]) {
       tiles[id] = { el: createTileEl(val, r, c), row: r, col: c, val: val };
-      setTilePosition(tiles[id]);
+      updateTilePosition(tiles[id]);
     } else {
       tiles[id].row = r;
       tiles[id].col = c;
       tiles[id].val = val;
-      
-      var color = colors[val] || { bg: '#000', text: '#fff' };
-      tiles[id].el.style.backgroundColor = color.bg;
+      tiles[id].el.style.backgroundColor = colors[val] || '#000';
       tiles[id].el.textContent = val;
-      setTilePosition(tiles[id]);
+      updateTilePosition(tiles[id]);
     }
   }
 

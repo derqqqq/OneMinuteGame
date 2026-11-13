@@ -38,11 +38,11 @@
     background-size: 24px 24px; z-index: -1;
   }
 
-  /* Шапка */
+  /* Шапка. Выравниваем всё по верхнему краю */
   header {
     position: relative;
     display: flex; 
-    align-items: flex-start; /* Выравнивание по верхнему краю */
+    align-items: flex-start; /* ВАЖНО: прижимает к верху */
     justify-content: space-between;
     padding: 0 var(--edge);
     height: 40px;
@@ -58,40 +58,39 @@
     text-decoration: none; font-family: inherit;
     border: none; line-height: 1;
     white-space: nowrap;
-    height: 40px;
+    height: 32px; /* Высота как у плашек */
   }
   .pill:active { opacity: 0.8; }
   
-  /* Одинаковые плашки */
+  /* Плашки */
   .score-area {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: 6px;
+    gap: 4px;
   }
   #score, #high-score {
-    font-size: 15px;
+    font-size: 13px;
     font-weight: 600;
-    padding: 6px 14px;
+    height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 8px;
     border-radius: 8px;
     font-variant-numeric: tabular-nums;
-    min-width: 110px;
-    text-align: center;
-    line-height: 1.2;
+    min-width: 90px;
   }
   #score {
     background: var(--accent);
     color: #FFFFFF;
-    height: 40px; /* Высота как у кнопки В меню */
-    display: flex; align-items: center; justify-content: center;
   }
   #high-score {
     background: var(--line);
     color: var(--hint);
   }
   
+  /* Заголовок строго по центру, но привязан к верху */
   h1 {
-    position: absolute; left: 50%; top: 20px; /* Центрируем относительно 40px кнопок */
+    position: absolute; left: 50%; top: 16px; /* Центр первой плашки */
     transform: translate(-50%, -50%);
     font-size: 26px; font-weight: 700; margin: 0;
     letter-spacing: -0.02em;
@@ -106,17 +105,19 @@
     overflow: hidden;
   }
   
-  /* Контейнер поля. Используем border, чтобы четко знать внутреннюю область */
   #game-container {
     position: relative;
     background: var(--line);
     border: 2px solid var(--accent);
     border-radius: 12px;
     touch-action: none;
-    box-sizing: border-box; /* Важно для точных расчетов */
+    aspect-ratio: 1 / 1;
+    max-width: 100%;
+    max-height: 100%;
+    width: 100%; 
   }
   
-  /* Сетка на фоне */
+  /* Сетка. Делаем фон меньше контейнера на размер рамки, чтобы отцентровать */
   #grid-bg {
     position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
@@ -127,16 +128,16 @@
       linear-gradient(90deg, rgba(0,0,0,0.06) 1px, transparent 1px);
   }
 
-  /* Кубики: размеры и позиция в процентах */
   .tile {
     position: absolute;
     display: flex; align-items: center; justify-content: center;
     border-radius: 8px;
     font-weight: 700;
+    font-size: 8vmin;
     transition: transform 0.1s ease-in-out, background-color 0.1s ease;
     will-change: transform;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    /* Размеры задаются в CSS через calc */
+    color: #FFFFFF !important;
   }
 
   #restart {
@@ -155,7 +156,6 @@
   }
   #restart:active { opacity: 0.85; }
 
-  /* Экран смерти */
   #overlay {
     position: fixed; inset: 0;
     background: rgba(28,28,28,0.35);
@@ -210,14 +210,19 @@
   .score-container { margin-top: 48px; margin-bottom: 24px; }
 
   #overlay .big-score {
-    font-size: 56px; font-weight: 700;
+    font-size: 72px; 
+    font-weight: 700;
     color: var(--accent);
     line-height: 1;
     margin: 0 0 6px;
     font-variant-numeric: tabular-nums;
   }
   
-  #overlay .score-label { font-size: 16px; color: var(--hint); margin: 0; }
+  #overlay .score-label { 
+    font-size: 20px; 
+    color: var(--hint); 
+    margin: 0; 
+  }
 
   .overlay-record { font-size: 16px; color: var(--hint); margin-bottom: 24px; font-weight: 600; }
   
@@ -315,6 +320,12 @@
     try { tg.ready(); } catch (e) {}
     try { tg.expand(); } catch (e) {}
     try {
+      if (typeof tg.isVersionAtLeast === 'function' && tg.isVersionAtLeast('7.7')) {
+        tg.disableVerticalSwipes();
+      }
+    } catch(e) {}
+    
+    try {
       if (tg.isFullscreen && (!tg.contentSafeAreaInset || tg.contentSafeAreaInset.top === 0)) {
         document.documentElement.style.setProperty('--tg-content-safe-area-inset-top', '60px');
       } else if (tg.contentSafeAreaInset && tg.contentSafeAreaInset.top > 0) {
@@ -333,8 +344,9 @@
   var overlayRecordEl = document.getElementById('overlay-record');
 
   var SIZE = 4;
-  var GAP_PERCENT = 2; // Отступ в процентах от ширины поля (2%)
-  var TILE_PERCENT = (100 - GAP_PERCENT * (SIZE + 1)) / SIZE; // Размер плитки в процентах (~23%)
+  // Используем доли, чтобы пересчитать сетку точнее
+  var GAP = 2; // 2% на отступ
+  var TILE = (100 - GAP * (SIZE + 1)) / SIZE; // 23%
   
   var grid = [];
   var tiles = {}; 
@@ -368,17 +380,17 @@
   }
 
   var colors = {
-    2:    { bg: '#EBE1C4', text: '#1C1C1C' },
-    4:    { bg: '#DFD3AA', text: '#1C1C1C' },
-    8:    { bg: '#CDAA4A', text: '#FFFFFF' },
-    16:   { bg: '#B8942E', text: '#FFFFFF' },
-    32:   { bg: '#A38027', text: '#FFFFFF' },
-    64:   { bg: '#8E6C20', text: '#FFFFFF' },
-    128:  { bg: '#7A5819', text: '#FFFFFF' },
-    256:  { bg: '#664413', text: '#FFFFFF' },
-    512:  { bg: '#52300D', text: '#FFFFFF' },
-    1024: { bg: '#3E1C07', text: '#FFFFFF' },
-    2048: { bg: '#2A0800', text: '#FFFFFF' }
+    2:    { bg: '#D4C48E', text: '#FFFFFF' }, 
+    4:    { bg: '#C5B076', text: '#FFFFFF' }, 
+    8:    { bg: '#B09650', text: '#FFFFFF' },
+    16:   { bg: '#CDAA4A', text: '#FFFFFF' },
+    32:   { bg: '#B8942E', text: '#FFFFFF' },
+    64:   { bg: '#A38027', text: '#FFFFFF' },
+    128:  { bg: '#8E6C20', text: '#FFFFFF' },
+    256:  { bg: '#7A5819', text: '#FFFFFF' },
+    512:  { bg: '#664413', text: '#FFFFFF' },
+    1024: { bg: '#52300D', text: '#FFFFFF' },
+    2048: { bg: '#3E1C07', text: '#FFFFFF' }
   };
 
   function haptic(type) {
@@ -391,57 +403,30 @@
     } catch (e) {}
   }
 
-  // Установка размеров контейнера
   function fitContainer() {
-    var w = boardWrap.clientWidth;
-    var h = boardWrap.clientHeight;
-    
-    // size с учетом border (2px * 2 = 4px)
-    var size = Math.min(w, h) - 4;
-    if (size < 100) return;
-    
-    container.style.width = size + 'px';
-    container.style.height = size + 'px';
-
-    // Сетка: позиция и размер через проценты
-    var bgSize = (TILE_PERCENT + GAP_PERCENT) + '%';
+    // Настраиваем сетку: размер ячейки + отступ
+    var bgSize = (TILE + GAP) + '%';
     gridBg.style.backgroundSize = bgSize + ' ' + bgSize;
-    gridBg.style.backgroundPosition = GAP_PERCENT + '% ' + GAP_PERCENT + '%';
+    // Смещаем так, чтобы линии были по центру между отступами
+    // Учитываем, что фон начинается с 0, а не с GAP
+    gridBg.style.backgroundPosition = GAP + '% ' + GAP + '%';
   }
 
-  // Позиция плитки (в процентах)
-  function updateTilePosition(t) {
-    var x = GAP_PERCENT + t.col * (TILE_PERCENT + GAP_PERCENT);
-    var y = GAP_PERCENT + t.row * (TILE_PERCENT + GAP_PERCENT);
-    
-    t.el.style.width = TILE_PERCENT + '%';
-    t.el.style.height = TILE_PERCENT + '%';
-    // font-size тоже можно привязать к ширине контейнера, но сделаем чуть позже
-    t.el.style.transform = 'translate(' + (x / TILE_PERCENT * 100) + '%, ' + (y / TILE_PERCENT * 100) + '%)';
-    // ВАЖНО: translate в процентах считается от размера самого элемента (плитки).
-    // Поэтому пересчитываем: если плитка 23% от контейнера, а нам нужно сдвинуть на 25%,
-    // то для плитки это сдвиг на (25 / 23 * 100)%.
-    // Формула: (GAP_PERCENT + col * (TILE_PERCENT + GAP_PERCENT)) / TILE_PERCENT * 100
-  }
-
-  // Переписываем updateTilePosition для точности
   function setTilePosition(t) {
-    var xPercent = (GAP_PERCENT + t.col * (TILE_PERCENT + GAP_PERCENT)) / TILE_PERCENT * 100;
-    var yPercent = (GAP_PERCENT + t.row * (TILE_PERCENT + GAP_PERCENT)) / TILE_PERCENT * 100;
+    var xPercent = (GAP + t.col * (TILE + GAP)) / TILE * 100;
+    var yPercent = (GAP + t.row * (TILE + GAP)) / TILE * 100;
     t.el.style.transform = 'translate(' + xPercent + '%, ' + yPercent + '%)';
   }
 
   function createTileEl(val, r, c) {
     var el = document.createElement('div');
     el.className = 'tile';
-    el.style.width = TILE_PERCENT + '%';
-    el.style.height = TILE_PERCENT + '%';
-    // Размер шрифта задаем жестко в CSS для плавности
-    el.style.fontSize = '8vw'; // Примерно подходит для 4x4
+    
+    el.style.width = TILE + '%';
+    el.style.height = TILE + '%';
     
     var color = colors[val] || { bg: '#000', text: '#fff' };
     el.style.backgroundColor = color.bg;
-    el.style.color = color.text;
     el.textContent = val;
 
     container.appendChild(el);
@@ -459,7 +444,6 @@
       
       var color = colors[val] || { bg: '#000', text: '#fff' };
       tiles[id].el.style.backgroundColor = color.bg;
-      tiles[id].el.style.color = color.text;
       tiles[id].el.textContent = val;
       setTilePosition(tiles[id]);
     }
@@ -719,24 +703,22 @@
       
       tg.openInvoice(data.link, function (status) {
         if (status === 'paid') {
-          setTimeout(function() {
-            fetch('https://my-bot.oneminutegame.workers.dev/api/check-payment', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ userId: userId })
-            })
-            .then(function (res) { return res.json(); })
-            .then(function (checkData) {
-              if (checkData.paid) {
-                reviveGame(); 
-                setTimeout(function() { btn.disabled = false; }, 500);
-              } else {
-                alert('Оплата еще обрабатывается. Попробуйте нажать еще раз через пару секунд.');
-                btn.disabled = false;
-              }
-            })
-            .catch(function() { btn.disabled = false; });
-          }, 1500);
+          fetch('https://my-bot.oneminutegame.workers.dev/api/check-payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: userId })
+          })
+          .then(function (res) { return res.json(); })
+          .then(function (checkData) {
+            if (checkData.paid) {
+              reviveGame(); 
+              btn.disabled = false;
+            } else {
+              alert('Оплата еще обрабатывается. Попробуйте нажать еще раз через пару секунд.');
+              btn.disabled = false;
+            }
+          })
+          .catch(function() { btn.disabled = false; });
         } else {
           btn.disabled = false;
           haptic('error');

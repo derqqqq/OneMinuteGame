@@ -62,14 +62,15 @@
     display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
   }
   
-  /* Уменьшили ширину плашек для идеального центра */
+  /* Одинаковые плашки в одну строку */
   #time-display, #high-score {
     font-size: 12px; font-weight: 600; height: 32px;
     display: flex; align-items: center; justify-content: center;
-    padding: 0 6px; border-radius: 8px;
+    padding: 0 4px; border-radius: 8px;
     font-variant-numeric: tabular-nums; 
-    width: 90px;
+    width: 95px; /* Чуть шире, чтобы влезло в одну строку */
     text-align: center;
+    white-space: nowrap; /* Запрет переноса */
   }
   #time-display { background: var(--accent); color: #FFFFFF; }
   #high-score { background: var(--line); color: var(--hint); }
@@ -93,8 +94,8 @@
     aspect-ratio: 1 / 1;
     max-width: 100%; max-height: 100%; width: 100%;
     display: grid;
-    grid-template-columns: repeat(9, 1fr);
-    grid-template-rows: repeat(9, 1fr);
+    grid-template-columns: repeat(10, 1fr); /* 10х10 */
+    grid-template-rows: repeat(10, 1fr);
     gap: 2px;
     padding: 4px;
     touch-action: none;
@@ -105,7 +106,7 @@
     border-radius: 4px;
     display: flex; align-items: center; justify-content: center;
     font-weight: 700;
-    font-size: 5vmin;
+    font-size: 4.5vmin; /* Уменьшили шрифт для поля 10х10 */
     transition: background-color 0.1s;
     box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
   }
@@ -117,7 +118,7 @@
   }
   .cell.open:active { filter: none; }
   
-  .cell.flag { color: var(--accent); font-size: 6vmin; }
+  .cell.flag { color: var(--accent); font-size: 5vmin; }
   .cell.mine { background: #e5484d; color: white; }
   
   /* Цвета цифр */
@@ -313,8 +314,8 @@
   var btnDig = document.getElementById('btn-dig');
   var btnFlag = document.getElementById('btn-flag');
 
-  var SIZE = 9;
-  var MINES = 12;
+  var SIZE = 10; // Поле 10х10
+  var MINES = 15; // 15 мин
   var grid = [];
   var cells = {};
   var gameOver = false;

@@ -40,7 +40,6 @@
     background-size: 24px 24px; z-index: -1;
   }
 
-  /* Шапка */
   header {
     position: relative;
     display: flex; align-items: center; justify-content: space-between;
@@ -72,7 +71,6 @@
     line-height: 1;
   }
 
-  /* Поле */
   #board-wrap {
     flex: 1; display: flex; align-items: center; justify-content: center;
     min-height: 0; padding: 0 28px;
@@ -86,7 +84,6 @@
     touch-action: none;
   }
 
-  /* Крестовина (возвращена на место) */
   #pad {
     position: relative;
     width: calc(var(--btn) * 3 + var(--gap) * 2);
@@ -137,7 +134,6 @@
   #pad button[data-dir="left"]  { left: 0; top: calc(var(--btn) / 2 + var(--gap) / 2); }
   #pad button[data-dir="right"] { right: 0; top: calc(var(--btn) / 2 + var(--gap) / 2); }
 
-  /* Кнопка Сначала */
   #restart {
     display: block;
     width: 50%;
@@ -154,7 +150,6 @@
   }
   #restart:active { opacity: 0.85; }
 
-  /* Экран смерти */
   #overlay {
     position: fixed; inset: 0;
     background: rgba(28,28,28,0.35);
@@ -189,7 +184,6 @@
   .btn-home-top:active { opacity: 0.8; }
   .btn-home-top svg { width: 20px; height: 20px; fill: currentColor; }
 
-  /* Заголовок ИГРА ОКОНЧЕНА (сдвинут вправо на 5px) */
   #overlay h2 {
     margin: 0 0 20px;
     font-size: 20px;
@@ -200,7 +194,7 @@
     
     position: absolute;
     top: 12px;
-    left: 5px; /* Сдвиг вправо */
+    left: 5px; 
     width: 100%;
     height: 36px;
     line-height: 36px;
@@ -317,7 +311,7 @@
       <button class="btn-accent" id="revive" type="button">
         <span>Воскреснуть</span>
         <span class="revive-cost">
-          <span>5</span>
+          <span>1</span>
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
           </svg>
@@ -353,11 +347,11 @@
 
   var COLS = 12, ROWS = 12;
   var START_SPEED = 180;
-  var MIN_SPEED = 150; 
+  var MIN_SPEED = 130; 
   var FOOD_APPEAR = 180;
   var FOOD_EAT = 140;
   var BORDER = 2;
-  var GOLD_CHANCE = 0.025;
+  var GOLD_CHANCE = 0.05;
   var GOLD_GROWTH = 3;
   var GOLD_SCORE = 3;
 
@@ -376,6 +370,7 @@
   var pendingGrowth = 0;
   var segmentAlphas = [];
   var queuedDir = null;
+  var canTurn = true; // Флаг для защиты от двойного поворота
 
   function haptic(type) {
     if (!tg || !tg.HapticFeedback) return;
@@ -482,6 +477,7 @@
     dir = {x: 1, y: 0};
     nextDir = {x: 1, y: 0};
     queuedDir = null;
+    canTurn = true;
     score = 0;
     speed = START_SPEED;
     stepDuration = START_SPEED;
@@ -502,6 +498,10 @@
   }
 
   function revive() {
+    // Принудительно разблокируем кнопку воскрешения, чтобы она не залипла
+    var btn = document.getElementById('revive');
+    if (btn) btn.disabled = false;
+
     if (!snake) { reset(); return; }
     var length = snake.length;
     snake = buildCenterSnake(length);
@@ -509,6 +509,7 @@
     dir = {x: 1, y: 0};
     nextDir = {x: 1, y: 0};
     queuedDir = null;
+    canTurn = true;
     alive = true;
     foodAppear = 0;
     foodEat = 0;
@@ -533,6 +534,8 @@
       nextDir = queuedDir;
       queuedDir = null;
     }
+
+    canTurn = true; // Разрешаем поворот только в начале нового шага
 
     prevSnake = cloneSnake(snake);
     stepStart = performance.now();
@@ -731,6 +734,9 @@
 
   function setDir(name) {
     if (!alive || !snake) return;
+    // Если игрок уже нажал кнопку в этом шаге, игнорируем, чтобы не сломать змейку
+    if (!canTurn) return; 
+
     var d;
     if (name === 'up') d = {x: 0, y: -1};
     else if (name === 'down') d = {x: 0, y: 1};
@@ -743,6 +749,7 @@
     if (d.x === ref.x && d.y === ref.y) return;
 
     queuedDir = d;
+    canTurn = false; // Блокируем до следующего шага
   }
 
   var padButtons = document.querySelectorAll('#pad button');
@@ -793,17 +800,15 @@
     var btn = this;
     if (!tg) { revive(); return; }
     btn.disabled = true;
-  
-    // Получаем ID пользователя Telegram
+
     var userId = tg.initDataUnsafe && tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : null;
-  
+
     if (!userId) {
         alert('Ошибка: Не удалось получить ID пользователя.');
         btn.disabled = false;
         return;
     }
-  
-    // 1. Просим сервер создать счет
+
     fetch('https://my-bot.oneminutegame.workers.dev/api/create-invoice', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -813,10 +818,8 @@
     .then(function (data) {
       if (!data.ok) throw new Error('Server error');
       
-      // 2. Открываем окно оплаты
       tg.openInvoice(data.link, function (status) {
         if (status === 'paid') {
-          // 3. Если оплачено, ждем 2 секунды и проверяем базу
           setTimeout(function() {
             fetch('https://my-bot.oneminutegame.workers.dev/api/check-payment', {
               method: 'POST',
@@ -826,19 +829,24 @@
             .then(function (res) { return res.json(); })
             .then(function (checkData) {
               if (checkData.paid) {
-                revive(); // База подтвердила — воскрешаем!
+                revive(); 
+                // Дополнительная страховка разблокировки
+                setTimeout(function() { btn.disabled = false; }, 500);
               } else {
-                alert('Оплата еще обрабатывается. Попробуйте нажать "Воскреснуть" еще раз через пару секунд.');
+                alert('Оплата еще обрабатывается. Попробуйте нажать еще раз через пару секунд.');
                 btn.disabled = false;
               }
+            })
+            .catch(function() {
+              btn.disabled = false; // Страховка при ошибке сети
             });
-          }, 1000); // Пауза 2000 миллисекунд (2 секунды)
+          }, 1500);
         } else {
           btn.disabled = false;
           haptic('error');
         }
       });
-    }, 300)
+    })
     .catch(function (err) {
       alert('Не удалось создать счет. Проверьте интернет.');
       btn.disabled = false;

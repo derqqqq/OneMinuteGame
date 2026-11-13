@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<script>(function(){function fmt(a){if(a instanceof Error)return a.message;if(typeof a==="object"&&a!==null){try{return JSON.stringify(a)}catch(e){return String(a)}}return String(a)}function send(t,m,l){try{parent.postMessage({__stc:1,type:t,msg:m,line:l},"*")}catch(e){}}["log","info","warn","error"].forEach(function(m){var o=console[m];console[m]=function(){send(m,Array.prototype.map.call(arguments,fmt).join(" "));if(o)o.apply(console,arguments)}});window.addEventListener("error",function(e){send("error",e.message,e.lineno)});window.addEventListener("unhandledrejection",function(e){send("error","Promise: "+fmt(e.reason))});})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>2048</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root {
+    --bg: #E8E4DC;
+    --card: #F2EFE9;
+    --text: #1C1C1C;
+    --hint: #6E6A63;
+    --accent: #B8942E;
+    --line: #D6D1C7;
+    --edge: 20px;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden; user-select: none; -webkit-user-select: none;
+  }
+  #app {
+    position: relative; z-index: 1;
+    display: flex; flex-direction: column;
+    height: 100vh; height: 100dvh;
+    padding-top: calc(var(--tg-content-safe-area-inset-top, 0px) + 12px);
+    padding-bottom: calc(14px + env(safe-area-inset-bottom));
+  }
+  #app::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(0,0,0,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,0.035) 1px, transparent 1px);
+    background-size: 24px 24px; z-index: -1;
+  }
+
+  /* Шапка */
+  header {
+    position: relative;
+    display: flex; 
+    align-items: flex-start; /* Выравнивание по верхнему краю */
+    justify-content: space-between;
+    padding: 0 var(--edge);
+    height: 40px;
+    margin-top: 6px;
+    margin-bottom: 12px;
+    flex-shrink: 0;
+  }
+  .pill {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--accent); color: #FFFFFF;
+    font-size: 15px; font-weight: 600;
+    padding: 0 16px; border-radius: 8px;
+    text-decoration: none; font-family: inherit;
+    border: none; line-height: 1;
+    white-space: nowrap;
+    height: 40px;
+  }
+  .pill:active { opacity: 0.8; }
+  
+  /* Одинаковые плашки */
+  .score-area {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+  }
+  #score, #high-score {
+    font-size: 15px;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-variant-numeric: tabular-nums;
+    min-width: 110px;
+    text-align: center;
+    line-height: 1.2;
+  }
+  #score {
+    background: var(--accent);
+    color: #FFFFFF;
+    height: 40px; /* Высота как у кнопки В меню */
+    display: flex; align-items: center; justify-content: center;
+  }
+  #high-score {
+    background: var(--line);
+    color: var(--hint);
+  }
+  
+  h1 {
+    position: absolute; left: 50%; top: 20px; /* Центрируем относительно 40px кнопок */
+    transform: translate(-50%, -50%);
+    font-size: 26px; font-weight: 700; margin: 0;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+    line-height: 1;
+  }
+
+  /* Поле */
+  #board-wrap {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    min-height: 0; padding: 0 20px;
+    overflow: hidden;
+  }
+  
+  /* Контейнер поля. Используем border, чтобы четко знать внутреннюю область */
+  #game-container {
+    position: relative;
+    background: var(--line);
+    border: 2px solid var(--accent);
+    border-radius: 12px;
+    touch-action: none;
+    box-sizing: border-box; /* Важно для точных расчетов */
+  }
+  
+  /* Сетка на фоне */
+  #grid-bg {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none;
+    border-radius: 10px;
+    background-image: 
+      linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,0.06) 1px, transparent 1px);
+  }
+
+  /* Кубики: размеры и позиция в процентах */
+  .tile {
+    position: absolute;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 8px;
+    font-weight: 700;
+    transition: transform 0.1s ease-in-out, background-color 0.1s ease;
+    will-change: transform;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    /* Размеры задаются в CSS через calc */
+  }
+
+  #restart {
+    display: block;
+    width: 70%;
+    margin: 24px auto 10px;
+    padding: 16px;
+    background: var(--accent);
+    color: #FFFFFF;
+    border: none;
+    border-radius: 10px;
+    font-size: 18px;
+    font-weight: 700;
+    font-family: inherit;
+    flex-shrink: 0;
+  }
+  #restart:active { opacity: 0.85; }
+
+  /* Экран смерти */
+  #overlay {
+    position: fixed; inset: 0;
+    background: rgba(28,28,28,0.35);
+    display: none; align-items: center; justify-content: center;
+    padding: 24px; z-index: 10;
+  }
+  #overlay.show { display: flex; }
+  
+  #overlay .card {
+    position: relative;
+    background: var(--card);
+    border: 2px solid var(--accent);
+    border-radius: 16px;
+    padding: 24px;
+    width: 100%; max-width: 320px;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .btn-home-top {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    display: flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px;
+    background: var(--accent); color: #FFFFFF;
+    border-radius: 8px;
+    text-decoration: none;
+    z-index: 2;
+  }
+  .btn-home-top:active { opacity: 0.8; }
+  .btn-home-top svg { width: 20px; height: 20px; fill: currentColor; }
+
+  #overlay h2 {
+    margin: 0 0 20px;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--hint);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    position: absolute;
+    top: 12px;
+    left: 5px; 
+    width: 100%;
+    height: 36px;
+    line-height: 36px;
+    text-align: center;
+    pointer-events: none;
+  }
+
+  .score-container { margin-top: 48px; margin-bottom: 24px; }
+
+  #overlay .big-score {
+    font-size: 56px; font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+    margin: 0 0 6px;
+    font-variant-numeric: tabular-nums;
+  }
+  
+  #overlay .score-label { font-size: 16px; color: var(--hint); margin: 0; }
+
+  .overlay-record { font-size: 16px; color: var(--hint); margin-bottom: 24px; font-weight: 600; }
+  
+  .overlay-buttons { display: flex; gap: 12px; margin-top: auto; }
+  
+  .overlay-buttons button {
+    flex: 1 1 0;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    height: 48px;
+    display: flex; align-items: center; justify-content: center;
+    line-height: 1; white-space: nowrap;
+  }
+  
+  .btn-gray {
+    background: var(--card);
+    border: 1px solid var(--accent) !important;
+    color: var(--accent);
+  }
+  .btn-gray:active { background: var(--line); }
+  
+  .btn-accent {
+    background: var(--accent);
+    border: 1px solid var(--accent) !important;
+    color: #FFFFFF;
+    gap: 6px;
+  }
+  .btn-accent:active { opacity: 0.85; }
+  
+  .revive-cost {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 14px; font-weight: 600; opacity: 0.95;
+  }
+  .revive-cost svg { width: 14px; height: 14px; display: block; fill: #FFFFFF; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <a class="pill" href="index.html">В меню</a>
+    <h1>2048</h1>
+    <div class="score-area">
+      <div id="score">Счёт: 0</div>
+      <div id="high-score">Рекорд: 0</div>
+    </div>
+  </header>
+
+  <div id="board-wrap">
+    <div id="game-container">
+      <div id="grid-bg"></div>
+    </div>
+  </div>
+
+  <button id="restart" type="button">Сначала</button>
+</div>
+
+<div id="overlay">
+  <div class="card">
+    <a class="btn-home-top" href="index.html" title="В меню">
+      <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+    </a>
+    
+    <h2>Игра окончена</h2>
+    
+    <div class="score-container">
+      <p class="big-score" id="final-score">0</p>
+      <p class="score-label">ваш счёт</p>
+    </div>
+
+    <p class="overlay-record" id="overlay-record">Рекорд: 0</p>
+    
+    <div class="overlay-buttons">
+      <button class="btn-gray" id="again" type="button">Сначала</button>
+      <button class="btn-accent" id="revive" type="button">
+        <span>Воскреснуть</span>
+        <span class="revive-cost">
+          <span>1</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+          </svg>
+        </span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+  if (tg) {
+    try { tg.ready(); } catch (e) {}
+    try { tg.expand(); } catch (e) {}
+    try {
+      if (tg.isFullscreen && (!tg.contentSafeAreaInset || tg.contentSafeAreaInset.top === 0)) {
+        document.documentElement.style.setProperty('--tg-content-safe-area-inset-top', '60px');
+      } else if (tg.contentSafeAreaInset && tg.contentSafeAreaInset.top > 0) {
+        document.documentElement.style.setProperty('--tg-content-safe-area-inset-top', tg.contentSafeAreaInset.top + 'px');
+      }
+    } catch(e){}
+  }
+
+  var boardWrap = document.getElementById('board-wrap');
+  var container = document.getElementById('game-container');
+  var gridBg = document.getElementById('grid-bg');
+  var scoreEl = document.getElementById('score');
+  var highScoreEl = document.getElementById('high-score');
+  var overlay = document.getElementById('overlay');
+  var finalScoreEl = document.getElementById('final-score');
+  var overlayRecordEl = document.getElementById('overlay-record');
+
+  var SIZE = 4;
+  var GAP_PERCENT = 2; // Отступ в процентах от ширины поля (2%)
+  var TILE_PERCENT = (100 - GAP_PERCENT * (SIZE + 1)) / SIZE; // Размер плитки в процентах (~23%)
+  
+  var grid = [];
+  var tiles = {}; 
+  var tileIdCounter = 0;
+  var score = 0;
+  var highScore = 0;
+  var gameOver = false;
+  var isAnimating = false;
+  var userId = null;
+
+  if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+    userId = tg.initDataUnsafe.user.id;
+  }
+
+  function loadHighScore() {
+    if (!userId) return;
+    try {
+      var saved = localStorage.getItem('2048_highscore_' + userId);
+      highScore = saved ? parseInt(saved, 10) : 0;
+    } catch(e) { highScore = 0; }
+    highScoreEl.textContent = 'Рекорд: ' + highScore;
+  }
+
+  function saveHighScore() {
+    if (!userId) return;
+    if (score > highScore) {
+      highScore = score;
+      try { localStorage.setItem('2048_highscore_' + userId, highScore); } catch(e) {}
+      highScoreEl.textContent = 'Рекорд: ' + highScore;
+    }
+  }
+
+  var colors = {
+    2:    { bg: '#EBE1C4', text: '#1C1C1C' },
+    4:    { bg: '#DFD3AA', text: '#1C1C1C' },
+    8:    { bg: '#CDAA4A', text: '#FFFFFF' },
+    16:   { bg: '#B8942E', text: '#FFFFFF' },
+    32:   { bg: '#A38027', text: '#FFFFFF' },
+    64:   { bg: '#8E6C20', text: '#FFFFFF' },
+    128:  { bg: '#7A5819', text: '#FFFFFF' },
+    256:  { bg: '#664413', text: '#FFFFFF' },
+    512:  { bg: '#52300D', text: '#FFFFFF' },
+    1024: { bg: '#3E1C07', text: '#FFFFFF' },
+    2048: { bg: '#2A0800', text: '#FFFFFF' }
+  };
+
+  function haptic(type) {
+    if (!tg || !tg.HapticFeedback) return;
+    if (typeof tg.isVersionAtLeast === 'function' && !tg.isVersionAtLeast('6.1')) return;
+    try {
+      if (type === 'light') tg.HapticFeedback.impactOccurred('light');
+      if (type === 'medium') tg.HapticFeedback.impactOccurred('medium');
+      if (type === 'error') tg.HapticFeedback.notificationOccurred('error');
+    } catch (e) {}
+  }
+
+  // Установка размеров контейнера
+  function fitContainer() {
+    var w = boardWrap.clientWidth;
+    var h = boardWrap.clientHeight;
+    
+    // size с учетом border (2px * 2 = 4px)
+    var size = Math.min(w, h) - 4;
+    if (size < 100) return;
+    
+    container.style.width = size + 'px';
+    container.style.height = size + 'px';
+
+    // Сетка: позиция и размер через проценты
+    var bgSize = (TILE_PERCENT + GAP_PERCENT) + '%';
+    gridBg.style.backgroundSize = bgSize + ' ' + bgSize;
+    gridBg.style.backgroundPosition = GAP_PERCENT + '% ' + GAP_PERCENT + '%';
+  }
+
+  // Позиция плитки (в процентах)
+  function updateTilePosition(t) {
+    var x = GAP_PERCENT + t.col * (TILE_PERCENT + GAP_PERCENT);
+    var y = GAP_PERCENT + t.row * (TILE_PERCENT + GAP_PERCENT);
+    
+    t.el.style.width = TILE_PERCENT + '%';
+    t.el.style.height = TILE_PERCENT + '%';
+    // font-size тоже можно привязать к ширине контейнера, но сделаем чуть позже
+    t.el.style.transform = 'translate(' + (x / TILE_PERCENT * 100) + '%, ' + (y / TILE_PERCENT * 100) + '%)';
+    // ВАЖНО: translate в процентах считается от размера самого элемента (плитки).
+    // Поэтому пересчитываем: если плитка 23% от контейнера, а нам нужно сдвинуть на 25%,
+    // то для плитки это сдвиг на (25 / 23 * 100)%.
+    // Формула: (GAP_PERCENT + col * (TILE_PERCENT + GAP_PERCENT)) / TILE_PERCENT * 100
+  }
+
+  // Переписываем updateTilePosition для точности
+  function setTilePosition(t) {
+    var xPercent = (GAP_PERCENT + t.col * (TILE_PERCENT + GAP_PERCENT)) / TILE_PERCENT * 100;
+    var yPercent = (GAP_PERCENT + t.row * (TILE_PERCENT + GAP_PERCENT)) / TILE_PERCENT * 100;
+    t.el.style.transform = 'translate(' + xPercent + '%, ' + yPercent + '%)';
+  }
+
+  function createTileEl(val, r, c) {
+    var el = document.createElement('div');
+    el.className = 'tile';
+    el.style.width = TILE_PERCENT + '%';
+    el.style.height = TILE_PERCENT + '%';
+    // Размер шрифта задаем жестко в CSS для плавности
+    el.style.fontSize = '8vw'; // Примерно подходит для 4x4
+    
+    var color = colors[val] || { bg: '#000', text: '#fff' };
+    el.style.backgroundColor = color.bg;
+    el.style.color = color.text;
+    el.textContent = val;
+
+    container.appendChild(el);
+    return el;
+  }
+
+  function setTile(id, val, r, c) {
+    if (!tiles[id]) {
+      tiles[id] = { el: createTileEl(val, r, c), row: r, col: c, val: val };
+      setTilePosition(tiles[id]);
+    } else {
+      tiles[id].row = r;
+      tiles[id].col = c;
+      tiles[id].val = val;
+      
+      var color = colors[val] || { bg: '#000', text: '#fff' };
+      tiles[id].el.style.backgroundColor = color.bg;
+      tiles[id].el.style.color = color.text;
+      tiles[id].el.textContent = val;
+      setTilePosition(tiles[id]);
+    }
+  }
+
+  function removeTile(id) {
+    if (tiles[id]) {
+      if (tiles[id].el.parentNode) tiles[id].el.parentNode.removeChild(tiles[id].el);
+      delete tiles[id];
+    }
+  }
+
+  function clearBoard() {
+    for (var id in tiles) removeTile(id);
+    grid = [];
+    for (var r = 0; r < SIZE; r++) {
+      var row = [];
+      for (var c = 0; c < SIZE; c++) row.push(null);
+      grid.push(row);
+    }
+  }
+
+  function addRandomTile() {
+    var empty = [];
+    for (var r = 0; r < SIZE; r++) {
+      for (var c = 0; c < SIZE; c++) {
+        if (grid[r][c] === null) empty.push({r: r, c: c});
+      }
+    }
+    if (empty.length === 0) return;
+    
+    var spot = empty[Math.floor(Math.random() * empty.length)];
+    var val = Math.random() < 0.9 ? 2 : 4;
+    var id = 't' + (tileIdCounter++);
+    grid[spot.r][spot.c] = { id: id, val: val };
+    setTile(id, val, spot.r, spot.c);
+  }
+
+  function reset() {
+    clearBoard();
+    score = 0;
+    scoreEl.textContent = 'Счёт: 0';
+    gameOver = false;
+    isAnimating = false;
+    overlay.classList.remove('show');
+    
+    addRandomTile();
+    addRandomTile();
+    fitContainer();
+  }
+
+  var touchStart = null;
+
+  function handleSwipe(dx, dy) {
+    if (gameOver || isAnimating) return;
+    if (Math.abs(dx) < 30 && Math.abs(dy) < 30) return;
+
+    if (Math.abs(dx) > Math.abs(dy)) {
+      if (dx > 0) move('right');
+      else move('left');
+    } else {
+      if (dy > 0) move('down');
+      else move('up');
+    }
+  }
+
+  document.addEventListener('touchstart', function (e) {
+    if (e.touches.length !== 1) { touchStart = null; return; }
+    var t = e.touches[0];
+    touchStart = {x: t.clientX, y: t.clientY};
+  }, {passive: true});
+
+  document.addEventListener('touchend', function (e) {
+    if (!touchStart) return;
+    var t = e.changedTouches[0];
+    var dx = t.clientX - touchStart.x;
+    var dy = t.clientY - touchStart.y;
+    touchStart = null;
+    handleSwipe(dx, dy);
+  }, {passive: true});
+
+  var mouseDown = false;
+  var mouseStart = null;
+
+  document.addEventListener('mousedown', function(e) {
+    mouseDown = true;
+    mouseStart = { x: e.clientX, y: e.clientY };
+  });
+
+  document.addEventListener('mouseup', function(e) {
+    if (!mouseDown) return;
+    mouseDown = false;
+    var dx = e.clientX - mouseStart.x;
+    var dy = e.clientY - mouseStart.y;
+    handleSwipe(dx, dy);
+  });
+
+  function move(direction) {
+    isAnimating = true;
+    var moved = false;
+
+    for (var r = 0; r < SIZE; r++) {
+      for (var c = 0; c < SIZE; c++) {
+        if (grid[r][c]) grid[r][c].merged = false;
+      }
+    }
+
+    var vectors = {
+      'up': { r: -1, c: 0, startR: 1, endR: SIZE, stepR: 1, startC: 0, endC: SIZE, stepC: 1 },
+      'down': { r: 1, c: 0, startR: SIZE - 2, endR: -1, stepR: -1, startC: 0, endC: SIZE, stepC: 1 },
+      'left': { r: 0, c: -1, startR: 0, endR: SIZE, stepR: 1, startC: 1, endC: SIZE, stepC: 1 },
+      'right': { r: 0, c: 1, startR: 0, endR: SIZE, stepR: 1, startC: SIZE - 2, endC: -1, stepC: -1 }
+    };
+
+    var v = vectors[direction];
+
+    for (var i = v.startR; i !== v.endR; i += v.stepR) {
+      for (var j = v.startC; j !== v.endC; j += v.stepC) {
+        if (!grid[i][j]) continue;
+
+        var current = grid[i][j];
+        var nr = i, nc = j;
+        
+        while (true) {
+          var nextR = nr + v.r;
+          var nextC = nc + v.c;
+          if (nextR < 0 || nextR >= SIZE || nextC < 0 || nextC >= SIZE) break;
+          
+          var nextCell = grid[nextR][nextC];
+          if (nextCell === null) {
+            nr = nextR; nc = nextC;
+          } else if (nextCell.val === current.val && !nextCell.merged) {
+            nr = nextR; nc = nextC;
+            break;
+          } else {
+            break;
+          }
+        }
+
+        if (nr !== i || nc !== j) {
+          moved = true;
+          grid[i][j] = null;
+          var targetCell = grid[nr][nc];
+
+          if (targetCell === null) {
+            grid[nr][nc] = current;
+            setTile(current.id, current.val, nr, nc);
+          } else if (targetCell.val === current.val) {
+            var newVal = current.val * 2;
+            score += newVal;
+            scoreEl.textContent = 'Счёт: ' + score;
+            haptic('light');
+            
+            removeTile(current.id);
+            setTile(targetCell.id, newVal, nr, nc);
+            targetCell.val = newVal;
+            targetCell.merged = true;
+            grid[nr][nc] = targetCell;
+          }
+        }
+      }
+    }
+
+    if (moved) {
+      setTimeout(function () {
+        addRandomTile();
+        isAnimating = false;
+        checkGameOver();
+      }, 100); 
+    } else {
+      isAnimating = false;
+    }
+  }
+
+  function checkGameOver() {
+    for (var r = 0; r < SIZE; r++) {
+      for (var c = 0; c < SIZE; c++) {
+        if (grid[r][c] === null) return;
+      }
+    }
+    for (var r = 0; r < SIZE; r++) {
+      for (var c = 0; c < SIZE; c++) {
+        var val = grid[r][c].val;
+        if (r < SIZE - 1 && grid[r + 1][c] && grid[r + 1][c].val === val) return;
+        if (c < SIZE - 1 && grid[r][c + 1] && grid[r][c + 1].val === val) return;
+      }
+    }
+    
+    gameOver = true;
+    haptic('error');
+    finalScoreEl.textContent = String(score);
+    saveHighScore();
+    overlayRecordEl.textContent = 'Рекорд: ' + highScore;
+    overlay.classList.add('show');
+  }
+
+  function reviveGame() {
+    var removed = false;
+    for (var r = 0; r < SIZE; r++) {
+      for (var c = 0; c < SIZE; c++) {
+        if (grid[r][c]) {
+          var val = grid[r][c].val;
+          if (val === 2 || val === 4) {
+            removeTile(grid[r][c].id);
+            grid[r][c] = null;
+            removed = true;
+          }
+        }
+      }
+    }
+    
+    if (!removed) {
+      var minVal = Infinity;
+      for (var r = 0; r < SIZE; r++) {
+        for (var c = 0; c < SIZE; c++) {
+          if (grid[r][c] && grid[r][c].val < minVal) minVal = grid[r][c].val;
+        }
+      }
+      for (var r = 0; r < SIZE; r++) {
+        for (var c = 0; c < SIZE; c++) {
+          if (grid[r][c] && grid[r][c].val === minVal) {
+            removeTile(grid[r][c].id);
+            grid[r][c] = null;
+          }
+        }
+      }
+    }
+
+    addRandomTile();
+    gameOver = false;
+    overlay.classList.remove('show');
+    haptic('medium');
+  }
+
+  document.getElementById('restart').addEventListener('click', reset);
+  document.getElementById('again').addEventListener('click', reset);
+  
+  document.getElementById('revive').addEventListener('click', function () {
+    var btn = this;
+    if (!tg) { reviveGame(); return; }
+    btn.disabled = true;
+
+    if (!userId) {
+        alert('Ошибка: Не удалось получить ID пользователя.');
+        btn.disabled = false;
+        return;
+    }
+
+    fetch('https://my-bot.oneminutegame.workers.dev/api/create-invoice', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: userId })
+    })
+    .then(function (res) { return res.json(); })
+    .then(function (data) {
+      if (!data.ok) throw new Error('Server error');
+      
+      tg.openInvoice(data.link, function (status) {
+        if (status === 'paid') {
+          setTimeout(function() {
+            fetch('https://my-bot.oneminutegame.workers.dev/api/check-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userId: userId })
+            })
+            .then(function (res) { return res.json(); })
+            .then(function (checkData) {
+              if (checkData.paid) {
+                reviveGame(); 
+                setTimeout(function() { btn.disabled = false; }, 500);
+              } else {
+                alert('Оплата еще обрабатывается. Попробуйте нажать еще раз через пару секунд.');
+                btn.disabled = false;
+              }
+            })
+            .catch(function() { btn.disabled = false; });
+          }, 1500);
+        } else {
+          btn.disabled = false;
+          haptic('error');
+        }
+      });
+    })
+    .catch(function (err) {
+      alert('Не удалось создать счет. Проверьте интернет.');
+      btn.disabled = false;
+    });
+  });
+
+  window.addEventListener('resize', fitContainer);
+  if (window.ResizeObserver) new ResizeObserver(fitContainer).observe(boardWrap);
+
+  requestAnimationFrame(function () {
+    loadHighScore();
+    fitContainer();
+    reset();
+  });
+})();
+</script>
+</body>
+</html>

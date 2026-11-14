@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<script>(function(){function fmt(a){if(a instanceof Error)return a.message;if(typeof a==="object"&&a!==null){try{return JSON.stringify(a)}catch(e){return String(a)}}return String(a)}function send(t,m,l){try{parent.postMessage({__stc:1,type:t,msg:m,line:l},"*")}catch(e){}}["log","info","warn","error"].forEach(function(m){var o=console[m];console[m]=function(){send(m,Array.prototype.map.call(arguments,fmt).join(" "));if(o)o.apply(console,arguments)}});window.addEventListener("error",function(e){send("error",e.message,e.lineno)});window.addEventListener("unhandledrejection",function(e){send("error","Promise: "+fmt(e.reason))});})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Змейка</title>
@@ -40,9 +39,10 @@
     background-size: 24px 24px; z-index: -1;
   }
 
+  /* Шапка */
   header {
     position: relative;
-    display: flex; align-items: center; justify-content: space-between;
+    display: flex; align-items: flex-start; justify-content: space-between;
     padding: 0 var(--edge);
     height: 40px;
     margin-top: 6px;
@@ -54,27 +54,36 @@
     background: var(--accent); color: #FFFFFF;
     font-size: 15px; font-weight: 600;
     padding: 0 16px; border-radius: 8px;
-    text-decoration: none; font-family: inherit;
-    border: none; line-height: 1;
-    white-space: nowrap;
-    height: 40px;
+    text-decoration: none; height: 40px;
   }
   .pill:active { opacity: 0.8; }
-  #score { font-variant-numeric: tabular-nums; }
+  
+  /* Плашки */
+  .score-area {
+    display: flex; flex-direction: column; align-items: flex-end; gap: 3px;
+  }
+  #score, #high-score {
+    font-size: 11px; font-weight: 600; height: 26px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 6px; border-radius: 6px;
+    font-variant-numeric: tabular-nums; 
+    width: 80px; 
+    text-align: center;
+    white-space: nowrap;
+  }
+  #score { background: var(--accent); color: #FFFFFF; }
+  #high-score { background: var(--line); color: var(--hint); }
   
   h1 {
-    position: absolute; left: 50%; top: 50%;
+    position: absolute; left: 50%; top: 20px;
     transform: translate(-50%, -50%);
-    font-size: 22px; font-weight: 600; margin: 0;
-    letter-spacing: -0.02em;
-    white-space: nowrap;
-    line-height: 1;
+    font-size: 24px; font-weight: 700; margin: 0; line-height: 1;
   }
 
+  /* Игровое поле (исправлено) */
   #board-wrap {
     flex: 1; display: flex; align-items: center; justify-content: center;
-    min-height: 0; padding: 0 28px;
-    margin-bottom: 10px;
+    min-height: 0; padding: 0 20px;
   }
   canvas {
     background: var(--card);
@@ -82,13 +91,17 @@
     border-radius: 12px;
     display: block;
     touch-action: none;
+    aspect-ratio: 1 / 1; /* Гарантирует квадрат */
+    max-width: 100%;
+    max-height: 100%;
   }
 
+  /* Крестовина */
   #pad {
     position: relative;
     width: calc(var(--btn) * 3 + var(--gap) * 2);
     height: calc(var(--btn) * 2 + var(--gap));
-    margin: 0 auto 16px auto;
+    margin: 16px auto;
     flex-shrink: 0;
   }
   #pad button {
@@ -134,22 +147,24 @@
   #pad button[data-dir="left"]  { left: 0; top: calc(var(--btn) / 2 + var(--gap) / 2); }
   #pad button[data-dir="right"] { right: 0; top: calc(var(--btn) / 2 + var(--gap) / 2); }
 
+  /* Кнопка Сначала */
   #restart {
     display: block;
-    width: 50%;
+    width: 65%;
     margin: 0 auto;
-    padding: 12px;
+    padding: 16px;
     background: var(--accent);
     color: #FFFFFF;
     border: none;
-    border-radius: 8px;
-    font-size: 15px;
-    font-weight: 600;
+    border-radius: 10px;
+    font-size: 18px;
+    font-weight: 700;
     font-family: inherit;
     flex-shrink: 0;
   }
   #restart:active { opacity: 0.85; }
 
+  /* Экран смерти */
   #overlay {
     position: fixed; inset: 0;
     background: rgba(28,28,28,0.35);
@@ -157,7 +172,6 @@
     padding: 24px; z-index: 10;
   }
   #overlay.show { display: flex; }
-  
   #overlay .card {
     position: relative;
     background: var(--card);
@@ -165,79 +179,49 @@
     border-radius: 16px;
     padding: 24px;
     width: 100%; max-width: 320px;
-    display: flex;
-    flex-direction: column;
-    text-align: center;
+    display: flex; flex-direction: column; text-align: center;
   }
-  
   .btn-home-top {
-    position: absolute;
-    top: 12px;
-    left: 12px;
+    position: absolute; top: 12px; left: 12px;
     display: flex; align-items: center; justify-content: center;
     width: 36px; height: 36px;
     background: var(--accent); color: #FFFFFF;
-    border-radius: 8px;
-    text-decoration: none;
-    z-index: 2;
+    border-radius: 8px; text-decoration: none; z-index: 2;
   }
   .btn-home-top:active { opacity: 0.8; }
   .btn-home-top svg { width: 20px; height: 20px; fill: currentColor; }
 
   #overlay h2 {
-    margin: 0 0 20px;
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--hint);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    
-    position: absolute;
-    top: 12px;
-    left: 5px; 
-    width: 100%;
-    height: 36px;
-    line-height: 36px;
-    text-align: center;
-    pointer-events: none;
-  }
-
-  .score-container {
-    margin-top: 48px; 
-    margin-bottom: 24px;
-  }
-
-  #overlay .big-score {
-    font-size: 56px; font-weight: 700;
-    color: var(--accent);
-    line-height: 1;
-    margin: 0 0 6px;
-    font-variant-numeric: tabular-nums;
+    margin: 0 0 20px; font-size: 20px; font-weight: 700; color: var(--hint);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    position: absolute; top: 12px; left: 5px; width: 100%; height: 36px;
+    line-height: 36px; text-align: center; pointer-events: none;
   }
   
-  #overlay .score-label {
-    font-size: 16px; color: var(--hint);
+  .score-container { margin-top: 80px; margin-bottom: 16px; }
+  #overlay .big-score {
+    font-size: 56px; font-weight: 700; color: var(--accent);
+    line-height: 1; margin: 0 0 6px; font-variant-numeric: tabular-nums;
+  }
+
+  .uniform-label {
+    font-size: 15px; 
+    color: var(--hint); 
+    font-weight: 500;
     margin: 0;
   }
   
-  .overlay-buttons {
-    display: flex;
-    gap: 12px;
-    margin-top: auto;
+  .overlay-record { 
+    margin-top: 12px;
+    margin-bottom: 24px; 
   }
   
+  .overlay-buttons { display: flex; gap: 12px; margin-top: auto; }
   .overlay-buttons button {
-    flex: 1 1 0;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    font-family: inherit;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-    white-space: nowrap;
+    flex: 1 1 0; border-radius: 8px; font-size: 14px; font-weight: 600;
+    font-family: inherit; height: 48px;
+    display: flex; align-items: center; justify-content: center;
+    line-height: 1; white-space: nowrap;
   }
   
   .btn-gray {
@@ -256,19 +240,10 @@
   .btn-accent:active { opacity: 0.85; }
   
   .revive-cost {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 14px;
-    font-weight: 600;
-    opacity: 0.95;
+    display: flex; align-items: center; gap: 4px;
+    font-size: 13px; font-weight: 600; opacity: 0.95;
   }
-  .revive-cost svg {
-    width: 14px;
-    height: 14px;
-    display: block;
-    fill: #FFFFFF;
-  }
+  .revive-cost svg { width: 12px; height: 12px; display: block; fill: #FFFFFF; }
 </style>
 </head>
 <body>
@@ -276,7 +251,10 @@
   <header>
     <a class="pill" href="index.html">В меню</a>
     <h1>Змейка</h1>
-    <div class="pill" id="score">Счёт: 0</div>
+    <div class="score-area">
+      <div id="score">Счёт: 0</div>
+      <div id="high-score">Рекорд: 0</div>
+    </div>
   </header>
 
   <div id="board-wrap">
@@ -298,23 +276,22 @@
     <a class="btn-home-top" href="index.html" title="В меню">
       <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
     </a>
-    
     <h2>Игра окончена</h2>
     
     <div class="score-container">
       <p class="big-score" id="final-score">0</p>
-      <p class="score-label">ваш счёт</p>
+      <p class="uniform-label">ваш счёт</p>
     </div>
+    
+    <p class="uniform-label overlay-record" id="overlay-record">Рекорд: 0</p>
     
     <div class="overlay-buttons">
       <button class="btn-gray" id="again" type="button">Сначала</button>
       <button class="btn-accent" id="revive" type="button">
         <span>Воскреснуть</span>
         <span class="revive-cost">
-          <span>1</span>
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-          </svg>
+          <span>5</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
         </span>
       </button>
     </div>
@@ -330,6 +307,11 @@
     try { tg.ready(); } catch (e) {}
     try { tg.expand(); } catch (e) {}
     try {
+      if (typeof tg.isVersionAtLeast === 'function' && tg.isVersionAtLeast('7.7')) {
+        tg.disableVerticalSwipes();
+      }
+    } catch(e) {}
+    try {
       if (tg.isFullscreen && (!tg.contentSafeAreaInset || tg.contentSafeAreaInset.top === 0)) {
         document.documentElement.style.setProperty('--tg-content-safe-area-inset-top', '60px');
       } else if (tg.contentSafeAreaInset && tg.contentSafeAreaInset.top > 0) {
@@ -341,8 +323,10 @@
   var canvas = document.getElementById('game');
   var ctx = canvas.getContext('2d');
   var scoreEl = document.getElementById('score');
+  var highScoreEl = document.getElementById('high-score');
   var overlay = document.getElementById('overlay');
   var finalScoreEl = document.getElementById('final-score');
+  var overlayRecordEl = document.getElementById('overlay-record');
   var boardWrap = document.getElementById('board-wrap');
 
   var COLS = 12, ROWS = 12;
@@ -370,7 +354,29 @@
   var pendingGrowth = 0;
   var segmentAlphas = [];
   var queuedDir = null;
-  var canTurn = true; // Флаг для защиты от двойного поворота
+  var canTurn = true; 
+  
+  var userId = "guest";
+  if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+    userId = tg.initDataUnsafe.user.id;
+  }
+  var highScore = 0;
+
+  function loadHighScore() {
+    try {
+      var saved = localStorage.getItem('snake_highscore_' + userId);
+      highScore = saved ? parseInt(saved, 10) : 0;
+    } catch(e) { highScore = 0; }
+    highScoreEl.textContent = 'Рекорд: ' + highScore;
+  }
+
+  function saveHighScore() {
+    if (score > highScore) {
+      highScore = score;
+      try { localStorage.setItem('snake_highscore_' + userId, highScore); } catch(e) {}
+      highScoreEl.textContent = 'Рекорд: ' + highScore;
+    }
+  }
 
   function haptic(type) {
     if (!tg || !tg.HapticFeedback) return;
@@ -498,10 +504,6 @@
   }
 
   function revive() {
-    // Принудительно разблокируем кнопку воскрешения, чтобы она не залипла
-    var btn = document.getElementById('revive');
-    if (btn) btn.disabled = false;
-
     if (!snake) { reset(); return; }
     var length = snake.length;
     snake = buildCenterSnake(length);
@@ -535,7 +537,7 @@
       queuedDir = null;
     }
 
-    canTurn = true; // Разрешаем поворот только в начале нового шага
+    canTurn = true; 
 
     prevSnake = cloneSnake(snake);
     stepStart = performance.now();
@@ -589,6 +591,10 @@
     queuedDir = null;
     haptic('error');
     finalScoreEl.textContent = String(score);
+    
+    saveHighScore();
+    overlayRecordEl.textContent = 'Рекорд: ' + highScore;
+    
     overlay.classList.add('show');
   }
 
@@ -734,7 +740,6 @@
 
   function setDir(name) {
     if (!alive || !snake) return;
-    // Если игрок уже нажал кнопку в этом шаге, игнорируем, чтобы не сломать змейку
     if (!canTurn) return; 
 
     var d;
@@ -749,7 +754,7 @@
     if (d.x === ref.x && d.y === ref.y) return;
 
     queuedDir = d;
-    canTurn = false; // Блокируем до следующего шага
+    canTurn = false;
   }
 
   var padButtons = document.querySelectorAll('#pad button');
@@ -801,8 +806,6 @@
     if (!tg) { revive(); return; }
     btn.disabled = true;
 
-    var userId = tg.initDataUnsafe && tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : null;
-
     if (!userId) {
         alert('Ошибка: Не удалось получить ID пользователя.');
         btn.disabled = false;
@@ -820,27 +823,22 @@
       
       tg.openInvoice(data.link, function (status) {
         if (status === 'paid') {
-          setTimeout(function() {
-            fetch('https://my-bot.oneminutegame.workers.dev/api/check-payment', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ userId: userId })
-            })
-            .then(function (res) { return res.json(); })
-            .then(function (checkData) {
-              if (checkData.paid) {
-                revive(); 
-                // Дополнительная страховка разблокировки
-                setTimeout(function() { btn.disabled = false; }, 500);
-              } else {
-                alert('Оплата еще обрабатывается. Попробуйте нажать еще раз через пару секунд.');
-                btn.disabled = false;
-              }
-            })
-            .catch(function() {
-              btn.disabled = false; // Страховка при ошибке сети
-            });
-          }, 1500);
+          fetch('https://my-bot.oneminutegame.workers.dev/api/check-payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: userId })
+          })
+          .then(function (res) { return res.json(); })
+          .then(function (checkData) {
+            if (checkData.paid) {
+              revive(); 
+              btn.disabled = false;
+            } else {
+              alert('Оплата еще обрабатывается. Попробуйте нажать еще раз через пару секунд.');
+              btn.disabled = false;
+            }
+          })
+          .catch(function() { btn.disabled = false; });
         } else {
           btn.disabled = false;
           haptic('error');
@@ -856,6 +854,8 @@
   window.addEventListener('resize', fitCanvas);
   if (window.ResizeObserver) new ResizeObserver(fitCanvas).observe(boardWrap);
 
+  loadHighScore();
+  
   requestAnimationFrame(function () {
     fitCanvas();
     reset();

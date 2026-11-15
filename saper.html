@@ -58,7 +58,6 @@
   }
   .pill:active { opacity: 0.8; }
   
-  /* Увеличенные плашки */
   .score-area {
     display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
   }
@@ -219,9 +218,6 @@
   .btn-accent:active { opacity: 0.85; }
   .revive-cost { display: flex; align-items: center; gap: 4px; font-size: 14px; font-weight: 600; opacity: 0.95; }
   .revive-cost svg { width: 14px; height: 14px; display: block; fill: #FFFFFF; }
-
-  #win-overlay h2 { color: var(--accent); font-size: 26px; position: static; margin-bottom: 10px; text-transform: none; letter-spacing: normal; }
-  #win-overlay p { font-size: 16px; color: var(--hint); margin: 0 0 24px; }
 </style>
 </head>
 <body>
@@ -289,8 +285,18 @@
 <!-- Экран победы -->
 <div id="win-overlay">
   <div class="card">
+    <a class="btn-home-top" href="index.html" title="В меню">
+      <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+    </a>
     <h2>Победа</h2>
-    <p>Ваше время: <span id="win-time" style="color: var(--accent); font-weight: bold; font-size: 20px;">00:00</span></p>
+    
+    <div class="score-container">
+      <p class="big-score" id="win-time">00:00</p>
+      <p class="uniform-label label-thin">ваше время</p>
+    </div>
+    
+    <p class="uniform-label overlay-record" id="win-record">Рекорд: --:--</p>
+    
     <div class="overlay-buttons">
       <a class="btn-gray" href="index.html">В меню</a>
       <button class="btn-accent" id="continue-btn" type="button">Ещё раз</button>
@@ -328,6 +334,7 @@
   var overlay = document.getElementById('overlay');
   var winOverlay = document.getElementById('win-overlay');
   var overlayRecordEl = document.getElementById('overlay-record');
+  var winRecordEl = document.getElementById('win-record');
   
   var btnDig = document.getElementById('btn-dig');
   var btnFlag = document.getElementById('btn-flag');
@@ -513,7 +520,6 @@
         
         var timeTaken = Math.floor((Date.now() - startTime) / 1000);
         finalTimeEl.textContent = formatTime(timeTaken);
-        
         overlayRecordEl.textContent = 'Рекорд: ' + (highScore > 0 ? formatTime(highScore) : '--:--');
         
         haptic('error');
@@ -572,6 +578,7 @@
       saveHighScore(timeTaken);
       
       winTimeEl.textContent = formatTime(timeTaken);
+      winRecordEl.textContent = 'Рекорд: ' + (highScore > 0 ? formatTime(highScore) : '--:--');
       
       haptic('medium');
       
@@ -709,7 +716,6 @@
     overlay.classList.remove('show');
     haptic('medium');
     
-    // Продолжаем таймер с того же места
     startTimer(); 
   }
 

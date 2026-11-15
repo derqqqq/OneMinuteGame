@@ -58,19 +58,18 @@
   }
   .pill:active { opacity: 0.8; }
   
+  /* Увеличенные плашки */
   .score-area {
     display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
   }
-  
-  /* Одинаковые плашки в одну строку */
   #time-display, #high-score {
-    font-size: 12px; font-weight: 600; height: 32px;
+    font-size: 13px; font-weight: 600; height: 34px;
     display: flex; align-items: center; justify-content: center;
-    padding: 0 4px; border-radius: 8px;
+    padding: 0 8px; border-radius: 8px;
     font-variant-numeric: tabular-nums; 
-    width: 95px; /* Чуть шире, чтобы влезло в одну строку */
+    width: 100px; 
     text-align: center;
-    white-space: nowrap; /* Запрет переноса */
+    white-space: nowrap;
   }
   #time-display { background: var(--accent); color: #FFFFFF; }
   #high-score { background: var(--line); color: var(--hint); }
@@ -94,7 +93,7 @@
     aspect-ratio: 1 / 1;
     max-width: 100%; max-height: 100%; width: 100%;
     display: grid;
-    grid-template-columns: repeat(10, 1fr); /* 10х10 */
+    grid-template-columns: repeat(10, 1fr);
     grid-template-rows: repeat(10, 1fr);
     gap: 2px;
     padding: 4px;
@@ -106,7 +105,7 @@
     border-radius: 4px;
     display: flex; align-items: center; justify-content: center;
     font-weight: 700;
-    font-size: 4.5vmin; /* Уменьшили шрифт для поля 10х10 */
+    font-size: 4.5vmin;
     transition: background-color 0.1s;
     box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
   }
@@ -188,10 +187,24 @@
   
   .score-container { margin-top: 48px; margin-bottom: 24px; }
   .big-score {
-    font-size: 48px; font-weight: 700; color: var(--accent);
+    font-size: 72px; font-weight: 700; color: var(--accent);
     line-height: 1; margin: 0 0 6px; font-variant-numeric: tabular-nums;
   }
-  .score-label { font-size: 16px; color: var(--hint); margin: 0; }
+  .uniform-label {
+    font-size: 18px; 
+    color: var(--hint); 
+    margin: 0;
+  }
+  .label-thin {
+    font-size: 19px;
+    font-weight: 400; 
+  }
+  .overlay-record { 
+    font-size: 17px;
+    font-weight: 500;
+    margin-top: 12px;
+    margin-bottom: 24px; 
+  }
   
   .overlay-buttons { display: flex; gap: 12px; margin-top: auto; }
   .overlay-buttons button, .overlay-buttons a {
@@ -232,7 +245,7 @@
         <rect x="11" y="2" width="2" height="12" fill="currentColor" rx="1"/>
         <path d="M8 13h8v5a4 4 0 0 1-8 0v-5z" fill="currentColor"/>
       </svg>
-      Копать
+      Лопата
     </button>
     <button class="mode-btn" id="btn-flag" type="button">
       <svg viewBox="0 0 24 24" width="18" height="18">
@@ -251,15 +264,19 @@
     <a class="btn-home-top" href="index.html" title="В меню">
       <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
     </a>
-    <h2>Взрыв</h2>
+    <h2>Игра окончена</h2>
+    
     <div class="score-container">
       <p class="big-score" id="final-time">00:00</p>
-      <p class="score-label">время игры</p>
+      <p class="uniform-label label-thin">ваше время</p>
     </div>
+    
+    <p class="uniform-label overlay-record" id="overlay-record">Рекорд: --:--</p>
+    
     <div class="overlay-buttons">
       <button class="btn-gray" id="again" type="button">Сначала</button>
       <button class="btn-accent" id="revive" type="button">
-        <span>Обезвредить</span>
+        <span>Воскреснуть</span>
         <span class="revive-cost">
           <span>1</span>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
@@ -310,12 +327,13 @@
   var winTimeEl = document.getElementById('win-time');
   var overlay = document.getElementById('overlay');
   var winOverlay = document.getElementById('win-overlay');
+  var overlayRecordEl = document.getElementById('overlay-record');
   
   var btnDig = document.getElementById('btn-dig');
   var btnFlag = document.getElementById('btn-flag');
 
-  var SIZE = 10; // Поле 10х10
-  var MINES = 15; // 15 мин
+  var SIZE = 10;
+  var MINES = 15;
   var grid = [];
   var cells = {};
   var gameOver = false;
@@ -495,6 +513,8 @@
         
         var timeTaken = Math.floor((Date.now() - startTime) / 1000);
         finalTimeEl.textContent = formatTime(timeTaken);
+        
+        overlayRecordEl.textContent = 'Рекорд: ' + (highScore > 0 ? formatTime(highScore) : '--:--');
         
         haptic('error');
         
@@ -689,6 +709,7 @@
     overlay.classList.remove('show');
     haptic('medium');
     
+    // Продолжаем таймер с того же места
     startTimer(); 
   }
 

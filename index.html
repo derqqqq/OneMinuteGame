@@ -61,6 +61,7 @@
     -webkit-overflow-scrolling: touch; scrollbar-width: none;
     padding: 0 var(--edge);
     scroll-padding-left: var(--edge);
+    scroll-behavior: smooth;
   }
   .pages::-webkit-scrollbar { display: none; }
   .page {
@@ -68,6 +69,7 @@
     display: flex; flex-direction: column;
     justify-content: flex-start;
     gap: 14px; padding: 4px 0; min-height: 0;
+    overflow-y: auto;
   }
   .page:not(:last-child) { margin-right: 20px; }
   
@@ -77,7 +79,12 @@
     border-radius: 12px; padding: 16px 18px 16px 24px;
     height: 118px; flex: 0 0 auto;
     color: var(--text); overflow: hidden;
+    transition: transform 0.1s ease;
+    cursor: pointer;
   }
+  .card:active { transform: scale(0.98); }
+  .card.disabled:active { transform: none; cursor: default; }
+  
   .card::before {
     content: ""; position: absolute; left: 0; top: 0; bottom: 0;
     width: 7px; background: var(--accent);
@@ -94,6 +101,7 @@
     padding: 8px 18px; border-radius: 8px;
     margin-top: 2px; align-self: flex-start;
     text-decoration: none;
+    transition: opacity 0.1s ease;
   }
   .card .badge:active { opacity: 0.75; }
   .card.disabled .badge { background: var(--line); color: var(--hint); pointer-events: none; }
@@ -146,6 +154,64 @@
     border-bottom: 4px solid transparent;
   }
 
+  /* Иконка "Вверх" — прыжок снизу вверх */
+  .icon-up {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+  .icon-up .player {
+    position: absolute;
+    bottom: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 20px;
+    background: var(--accent);
+    border-radius: 50%;
+    z-index: 2;
+  }
+  .icon-up .player::after {
+    content: "";
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: #FFFFFF;
+    border-radius: 50%;
+    top: 4px;
+    right: 3px;
+  }
+  .icon-up .plat-normal {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 28px;
+    height: 6px;
+    background: var(--accent);
+    border-radius: 3px;
+  }
+  .icon-up .plat-moving {
+    position: absolute;
+    top: 4px;
+    right: 2px;
+    width: 26px;
+    height: 6px;
+    background: #9A7A24;
+    border-radius: 3px;
+  }
+  .icon-up .plat-moving::before,
+  .icon-up .plat-moving::after {
+    content: "";
+    position: absolute;
+    width: 2px;
+    height: 4px;
+    background: rgba(255,255,255,0.3);
+    top: 1px;
+  }
+  .icon-up .plat-moving::before { left: 6px; }
+  .icon-up .plat-moving::after { right: 6px; }
+
   .support-card {
     background: var(--card); border: 1px solid var(--line);
     border-radius: 12px; padding: 18px;
@@ -169,9 +235,10 @@
     border: none; border-radius: 8px;
     padding: 10px 22px; font-size: 14px; font-weight: 600;
     align-self: flex-start; font-family: inherit;
+    transition: opacity 0.1s ease;
   }
   .support-card button:active { opacity: 0.75; }
-  .support-card button:disabled { opacity: 0.5; }
+  .support-card button:disabled { opacity: 0.5; pointer-events: none; }
   .support-status { font-size: 13px; color: var(--hint); margin: 0; min-height: 18px; }
   .support-status.ok { color: var(--accent); }
   .support-status.err { color: #e5484d; }
@@ -205,20 +272,21 @@
         <div class="support-thanks">Спасибо, что пользуетесь нашим ботом!</div>
       </div>
 
+      <!-- Страница 1: Классика (3 карточки) -->
       <div class="page games">
         <div class="card">
           <div class="info">
             <h2>Змейка</h2>
             <p class="desc">Чем длиннее, тем сложнее</p>
-            <a class="badge" href="snake.html">Играть</a>
+            <a class="badge" href="snake.html" onclick="haptic();">Играть</a>
           </div>
           <div class="thumb"><div class="icon-snake"><span class="s1"></span><span class="s2"></span><span class="s3"></span><span class="s4"></span><span class="s5"></span><span class="head"></span></div></div>
         </div>
         <div class="card">
           <div class="info">
             <h2>2048</h2>
-            <p class="desc">Дойди до 2048</p>
-            <a class="badge" href="2048.html">Играть</a>
+            <p class="desc">Складывай, пока есть место</p>
+            <a class="badge" href="2048.html" onclick="haptic();">Играть</a>
           </div>
           <div class="thumb"><div class="icon-2048"><span>2</span><span>0</span><span>4</span><span>8</span></div></div>
         </div>
@@ -226,14 +294,29 @@
           <div class="info">
             <h2>Сапёр</h2>
             <p class="desc">Одна ошибка стоит жизни</p>
-            <a class="badge" href="saper.html">Играть</a>
+            <a class="badge" href="saper.html" onclick="haptic();">Играть</a>
           </div>
           <div class="thumb"><div class="icon-mines"><span class="dot"></span><span></span><span class="dot"></span><span></span><span class="flag"></span><span class="dot"></span><span></span><span class="dot"></span><span></span></div></div>
         </div>
       </div>
 
+      <!-- Страница 2: Вверх (3 карточки) -->
       <div class="page games">
-        <div class="card disabled"><div class="info"><h2>Тетрис</h2><p class="desc">Собирайте линии</p><span class="badge">Скоро</span></div><div class="thumb"></div></div>
+        <div class="card">
+          <div class="info">
+            <h2>Вверх</h2>
+            <p class="desc">Прыгай как можно выше</p>
+            <a class="badge" href="vverh.html" onclick="haptic();">Играть</a>
+          </div>
+          <div class="thumb">
+            <div class="icon-up">
+              <div class="player"></div>
+              <div class="plat-normal"></div>
+              <div class="plat-moving"></div>
+            </div>
+          </div>
+        </div>
+        
         <div class="card disabled"><div class="info"><h2>Пятнашки</h2><p class="desc">Расставьте числа по порядку</p><span class="badge">Скоро</span></div><div class="thumb"></div></div>
         <div class="card disabled"><div class="info"><h2>Викторина</h2><p class="desc">Проверьте эрудицию</p><span class="badge">Скоро</span></div><div class="thumb"></div></div>
       </div>
@@ -266,9 +349,10 @@
 
   function haptic() {
     if (tg && tg.HapticFeedback) {
-      try { tg.HapticFeedback.impactOccurred('medium'); } catch (e) {}
+      try { tg.HapticFeedback.impactOccurred('light'); } catch (e) {}
     }
   }
+  window.haptic = haptic; // Делаем доступной для onclick в HTML
 
   var PAGE_GAP = 20;
   var pages = document.getElementById('pages');
@@ -369,19 +453,44 @@
     }
   });
 
-  // Форма жалоб
+  // Форма жалоб (с защитой на 5 минут)
   var FORMSPREE_URL = 'https://formspree.io/f/mgakwyqr';
   var textEl = document.getElementById('bug-text');
   var sendBtn = document.getElementById('bug-send');
   var statusEl = document.getElementById('bug-status');
+  var LAST_SEND_KEY = 'last_bug_send_time';
+  var COOLDOWN_MS = 5 * 60 * 1000; // 5 минут
+
+  function updateButtonState() {
+    var lastTime = parseInt(localStorage.getItem(LAST_SEND_KEY) || '0', 10);
+    var now = Date.now();
+    if (now - lastTime < COOLDOWN_MS) {
+      var remain = Math.ceil((COOLDOWN_MS - (now - lastTime)) / 60000);
+      sendBtn.disabled = true;
+      sendBtn.textContent = 'Подождите ' + remain + ' мин.';
+    } else {
+      sendBtn.disabled = false;
+      sendBtn.textContent = 'Отправить';
+    }
+  }
+
+  // Проверяем при загрузке
+  updateButtonState();
+  // Обновляем раз в минуту, если страница открыта
+  setInterval(updateButtonState, 60000);
 
   sendBtn.addEventListener('click', function () {
+    // Еще раз проверяем на всякий случай
+    var lastTime = parseInt(localStorage.getItem(LAST_SEND_KEY) || '0', 10);
+    if (Date.now() - lastTime < COOLDOWN_MS) return;
+
     var text = textEl.value.trim();
     if (!text) {
       statusEl.textContent = 'Напишите, что случилось.';
       statusEl.className = 'support-status err';
       return;
     }
+    
     sendBtn.disabled = true;
     statusEl.textContent = 'Отправляем…';
     statusEl.className = 'support-status';
@@ -397,16 +506,21 @@
         statusEl.textContent = 'Спасибо, сообщение отправлено.';
         statusEl.className = 'support-status ok';
         haptic();
+        
+        // Ставим блокировку на 5 минут
+        localStorage.setItem(LAST_SEND_KEY, Date.now().toString());
+        updateButtonState();
       } else {
         statusEl.textContent = 'Не удалось отправить. Попробуйте ещё раз.';
         statusEl.className = 'support-status err';
+        sendBtn.disabled = false;
       }
     })
     .catch(function () {
       statusEl.textContent = 'Ошибка сети. Попробуйте ещё раз.';
       statusEl.className = 'support-status err';
-    })
-    .finally(function () { sendBtn.disabled = false; });
+      sendBtn.disabled = false;
+    });
   });
 })();
 </script>
